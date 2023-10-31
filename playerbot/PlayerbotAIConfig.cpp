@@ -113,7 +113,7 @@ bool PlayerbotAIConfig::Initialize()
     grindDistance = config.GetFloatDefault("AiPlayerbot.GrindDistance", 75.0f);
     aggroDistance = config.GetFloatDefault("AiPlayerbot.AggroDistance", 22.0f);
     lootDistance = config.GetFloatDefault("AiPlayerbot.LootDistance", 15.0f);
-    fleeDistance = config.GetFloatDefault("AiPlayerbot.FleeDistance", 7.5f);
+    fleeDistance = config.GetFloatDefault("AiPlayerbot.FleeDistance", 8.0f);
     tooCloseDistance = config.GetFloatDefault("AiPlayerbot.TooCloseDistance", 5.0f);
     meleeDistance = config.GetFloatDefault("AiPlayerbot.MeleeDistance", 1.5f);
     followDistance = config.GetFloatDefault("AiPlayerbot.FollowDistance", 1.5f);
@@ -139,6 +139,7 @@ bool PlayerbotAIConfig::Initialize()
     randomBotMaxLevelChance = config.GetFloatDefault("AiPlayerbot.RandomBotMaxLevelChance", 0.15f);
     randomBotRpgChance = config.GetFloatDefault("AiPlayerbot.RandomBotRpgChance", 0.35f);
     usePotionChance = config.GetFloatDefault("AiPlayerbot.UsePotionChance", 1.0f);
+    useHSChance = config.GetFloatDefault("AiPlayerbot.UseHSChance", 1.0f);
 
     iterationsPerTick = config.GetIntDefault("AiPlayerbot.IterationsPerTick", 100);
 
@@ -487,7 +488,7 @@ bool PlayerbotAIConfig::Initialize()
                 for (uint8 slot = 0; slot < SLOT_EMPTY; slot++)
                 {
                     ostringstream os; os << "AiPlayerbot.GearProgressionSystem." << std::to_string(phase) << "." << std::to_string(cls) << "." << std::to_string(spec) << "." << std::to_string(slot);
-                    gearProgressionSystemItems[phase][cls][spec][slot] = config.GetIntDefault(os.str().c_str(), 0);
+                    gearProgressionSystemItems[phase][cls][spec][slot] = config.GetIntDefault(os.str().c_str(), -1);
                 }
             }
         }

@@ -123,6 +123,10 @@ void ChatReplyAction::ChatReplyDo(Player* bot, uint32 type, uint32 guid1, uint32
     while (std::getline(text, segment, ' '))
     {
         word.push_back(segment);
+
+        // each segment is a word in the line that triggered the bot
+        //ostringstream out; out << segment;
+        //bot->Say(out.str(), LANG_UNIVERSAL);
     }
 
     for (uint32 i = 0; i < 15; i++)

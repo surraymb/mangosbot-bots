@@ -558,8 +558,8 @@ bool BGJoinAction::isUseful()
 #endif
 
     // do not try if with player master or in combat/group
-    if (bot->GetPlayerbotAI()->HasActivePlayerMaster())
-        return false;
+    //if (bot->GetPlayerbotAI()->HasActivePlayerMaster())
+    //    return false;
 
     //if (bot->GetGroup() && !bot->GetGroup()->IsLeader(bot->GetObjectGuid()))
     //    return false;
