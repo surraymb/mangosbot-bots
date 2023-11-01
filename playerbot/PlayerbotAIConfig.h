@@ -94,6 +94,7 @@ public:
     float randomBotRpgChance;
     float usePotionChance;
     float useHSChance;
+    bool freeWorldBuffs;
     uint32 minRandomBots, maxRandomBots;
     uint32 randomBotUpdateInterval, randomBotCountChangeMinInterval, randomBotCountChangeMaxInterval;
     uint32 loginBoostPercentage;

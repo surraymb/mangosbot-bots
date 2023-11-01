@@ -787,7 +787,12 @@ void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const
         }
     }
 
-    nonCombatEngine->addStrategies("wbuff", NULL);
+    // Check the chance of using a Healthstone
+
+    if(sPlayerbotAIConfig.freeWorldBuffs)
+    {
+        nonCombatEngine->addStrategies("wbuff", NULL);
+    }
 
     if (!player->InBattleGround())
     {

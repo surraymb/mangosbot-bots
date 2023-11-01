@@ -1384,6 +1384,8 @@ void PlayerbotFactory::InitEquipment(bool incremental, bool syncWithMaster)
     lockedItems.push_back(17142); // Shard of the Defiler
     lockedItems.push_back(17782); // Talisman of Binding Shard
     lockedItems.push_back(12947); // Alex's Ring of Audacity
+    lockedItems.push_back(22589); // Atiesh, Greatstaff of the Guardian
+    lockedItems.push_back(17182); // Sulfuras, Hand of Ragnaros
 
     for(uint8 slot = 0; slot < EQUIPMENT_SLOT_END; ++slot)
     {
@@ -1402,7 +1404,9 @@ void PlayerbotFactory::InitEquipment(bool incremental, bool syncWithMaster)
         bool progressiveGear = sPlayerbotAIConfig.randomGearProgression;
         if(syncWithMaster && ai->GetMaster())
         {
-            maxItemLevel = masterGS + sPlayerbotAIConfig.randomGearMaxDiff;
+            ostringstream out; out << "DEBUG: Sync ON!";
+            bot->Say(out.str(), LANG_UNIVERSAL);
+            maxItemLevel = masterGS; //+ sPlayerbotAIConfig.randomGearMaxDiff;
             progressiveGear = false;
             if (bot->GetLevel() != searchLevel)
             {
@@ -1483,6 +1487,12 @@ void PlayerbotFactory::InitEquipment(bool incremental, bool syncWithMaster)
 
         bool found = false;
         uint32 attempts = 0;
+//        ostringstream out; out << "DEBUG: first attempt - starting";
+//        bot->Say(out.str(), LANG_UNIVERSAL);
+
+//        ostringstream out; out << "DEBUG: Looking for item for slot:" << slot;
+//        bot->Say(out.str(), LANG_UNIVERSAL);
+
         do
         {
             // pick random shirt
@@ -1540,6 +1550,7 @@ void PlayerbotFactory::InitEquipment(bool incremental, bool syncWithMaster)
                 vector<uint32> ids;
                 for (uint32 q = quality; q < ITEM_QUALITY_ARTIFACT; ++q)
                 {
+                    
                     uint32 currSearchLevel = searchLevel;
                     bool hasProperLevel = false;
                     while (!hasProperLevel && currSearchLevel > 0)
@@ -1563,6 +1574,9 @@ void PlayerbotFactory::InitEquipment(bool incremental, bool syncWithMaster)
 
                         if (!hasProperLevel)
                         {
+                            //ostringstream out; out << "hasProperLevel is false, reducing by one, current: " << currSearchLevel;
+                            //bot->Say(out.str(), LANG_UNIVERSAL);
+
                             ids.clear();
                             currSearchLevel--;
                         }
@@ -1593,7 +1607,15 @@ void PlayerbotFactory::InitEquipment(bool incremental, bool syncWithMaster)
                     }
                 }
 
-                sLog.outDetail("Bot #%d %s:%d <%s>: %u possible items for slot %d", bot->GetGUIDLow(), bot->GetTeam() == ALLIANCE ? "A" : "H", bot->GetLevel(), bot->GetName(), ids.size(), slot);
+                /*
+                ostringstream out;
+                out << "Bot #" << bot->GetGUIDLow() << " "
+                    << (bot->GetTeam() == ALLIANCE ? "A" : "H") << ":" << bot->GetLevel()
+                    << " <" << bot->GetName() << ">: " << ids.size() << " potential items for slot " << slot;
+
+                sLog.outDetail(out.str().c_str());
+                bot->Say(out.str(), LANG_UNIVERSAL);
+                */
 
                 if (incremental || !progressiveGear)
                 {
@@ -1801,10 +1823,23 @@ void PlayerbotFactory::InitEquipment(bool incremental, bool syncWithMaster)
                             EnchantItem(pItem);
                             //AddGems(pItem);
                             found = true;
+                            //ostringstream out; out << "DEBUG: Found an item for slot:" << slot;
+                            //bot->Say(out.str(), LANG_UNIVERSAL);
                         }
                     }
                     if (found)
                     {
+                        /*
+                        ostringstream out;
+                        out << "Bot #" << bot->GetGUIDLow() << " "
+                            << (bot->GetTeam() == ALLIANCE ? "A" : "H") << ":" << bot->GetLevel()
+                            << " <" << bot->GetName() << ">: New Item: slot: " << slot
+                            << ", id: " << proto->ItemId << ", value: " << newStatValue
+                            << " (" << proto->Name1 << ")";
+
+                        bot->Say(out.str(), LANG_UNIVERSAL);
+                        */
+
                         if (incremental)
                         {
                             if (oldItem)
@@ -1820,11 +1855,24 @@ void PlayerbotFactory::InitEquipment(bool incremental, bool syncWithMaster)
                 quality--;
 
             attempts++;
-        } while (!found && attempts < 2/* && (progressiveGear ? (quality != ITEM_QUALITY_ARTIFACT) : (quality != ITEM_QUALITY_POOR))*/);
+            ostringstream out; out << "DEBUG: attempt failed, next attempt #" << attempts;
+            bot->Say(out.str(), LANG_UNIVERSAL);
+        } while (!found && attempts < 8/* && (progressiveGear ? (quality != ITEM_QUALITY_ARTIFACT) : (quality != ITEM_QUALITY_POOR))*/);
         if (!found)
         {
             if (slot != EQUIPMENT_SLOT_TRINKET1 && slot != EQUIPMENT_SLOT_TRINKET2)
+            {
                 sLog.outDetail("Bot #%d %s:%d <%s>: no items for slot %d, quality >= %u", bot->GetGUIDLow(), bot->GetTeam() == ALLIANCE ? "A" : "H", bot->GetLevel(), bot->GetName(), slot, quality);
+                //ostringstream out;
+
+                // Construct the message
+                //out << "Bot #" << bot->GetGUIDLow() << " "
+                //    << (bot->GetTeam() == ALLIANCE ? "A" : "H") << ":" << bot->GetLevel()
+                //    << " <" << bot->GetName() << ">: no items for slot " << slot
+                //    << ", quality >= " << quality;
+                //bot->Say(out.str(), LANG_UNIVERSAL);
+
+            }
             continue;
         }
     }
