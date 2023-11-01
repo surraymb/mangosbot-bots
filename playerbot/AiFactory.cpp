@@ -787,11 +787,14 @@ void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const
         }
     }
 
-    // Check the chance of using a Healthstone
-
+    // Check the setting to decide if bots should get world buffs
     if(sPlayerbotAIConfig.freeWorldBuffs)
     {
         nonCombatEngine->addStrategies("wbuff", NULL);
+    }
+    else
+    {
+        nonCombatEngine->removeStrategy("wbuff");
     }
 
     if (!player->InBattleGround())
@@ -825,7 +828,7 @@ void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const
             }
 
             nonCombatEngine->addStrategy("collision");
-            nonCombatEngine->addStrategy("grind");            
+            nonCombatEngine->addStrategy("grind");
             nonCombatEngine->addStrategy("group");
             nonCombatEngine->addStrategy("guild");
 
