@@ -93,9 +93,8 @@ namespace ai
 
         bool Execute(Event& event) override
         {
-            // Check the chance of using a potion
-            const bool shouldUsePotion = frand(0.0f, 1.0f) < sPlayerbotAIConfig.usePotionChance;
-
+            // Check the chance of using a potion (only in pvp)
+            const bool shouldUsePotion = !ai->IsInPvp() || frand(0.0f, 1.0f) < sPlayerbotAIConfig.usePotionChance;
             if (shouldUsePotion)
             {
                 return UseItemIdAction::Execute(event);
@@ -218,7 +217,7 @@ namespace ai
         bool Execute(Event& event) override
         {
             // Check the chance of using a Healthstone
-            const bool shouldUseHS = frand(0.0f, 1.0f) < sPlayerbotAIConfig.useHSChance;
+            const bool shouldUseHS = !ai->IsInPvp() || frand(0.0f, 1.0f) < sPlayerbotAIConfig.useHSChance;;
 
             if (shouldUseHS)
             {
@@ -259,6 +258,16 @@ namespace ai
 
             return true;
         }
+    };
+
+    class UseWhipperRootTuberAction : public UseItemIdAction
+    {
+    public:
+        UseWhipperRootTuberAction(PlayerbotAI* ai) : UseItemIdAction(ai, "whipper root tuber") {}
+
+        bool isUseful() override { return UseItemIdAction::isUseful() && AI_VALUE2(bool, "combat", "self target"); }
+
+        uint32 GetItemId() override { return 11951; }
     };
 
     class UseRandomRecipeAction : public UseItemAction
