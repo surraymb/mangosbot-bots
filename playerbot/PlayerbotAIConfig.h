@@ -118,6 +118,7 @@ public:
     std::string combatStrategies, nonCombatStrategies, reactStrategies, deadStrategies;
     std::string randomBotCombatStrategies, randomBotNonCombatStrategies, randomBotReactStrategies, randomBotDeadStrategies;
     uint32 randomBotMinLevel, randomBotMaxLevel;
+    bool maxLevelNoRandomise;
     float randomChangeMultiplier;
     uint32 specProbability[MAX_CLASSES][10];
     string premadeLevelSpec[MAX_CLASSES][10][91]; //lvl 10 - 100

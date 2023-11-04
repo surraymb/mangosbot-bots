@@ -22,8 +22,9 @@ public:
         if (proto->Class != ITEM_CLASS_CONSUMABLE)
             return true;
 
-        if (proto->SubClass != ITEM_SUBCLASS_ELIXIR && 
-            proto->SubClass != ITEM_SUBCLASS_FLASK &&
+        // CUSTOM: try to disable flask usage by bots
+        if (proto->SubClass == ITEM_SUBCLASS_ELIXIR && 
+            proto->SubClass == ITEM_SUBCLASS_FLASK &&
             proto->SubClass != ITEM_SUBCLASS_SCROLL && 
             proto->SubClass != ITEM_SUBCLASS_FOOD &&
             proto->SubClass != ITEM_SUBCLASS_CONSUMABLE_OTHER &&

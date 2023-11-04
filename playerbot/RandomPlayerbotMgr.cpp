@@ -1867,6 +1867,7 @@ bool RandomPlayerbotMgr::ProcessBot(uint32 bot)
 
 bool RandomPlayerbotMgr::ProcessBot(Player* player)
 {
+
     if (!player || !player->IsInWorld() || player->IsBeingTeleported() || player->GetSession()->isLogingOut())
         return false;
 
@@ -2443,6 +2444,12 @@ void RandomPlayerbotMgr::Randomize(Player* bot)
     if (!bot || !bot->IsInWorld() || bot->IsBeingTeleported() || bot->GetSession()->isLogingOut())
         return;
 
+    if (bot->GetLevel() == sPlayerbotAIConfig.randomBotMaxLevel && sPlayerbotAIConfig.maxLevelNoRandomise)
+    {
+        sLog.outBasic("Bot #%d %s:%d <%s>: skipped randomise on max level bot", bot, bot->GetTeam() == ALLIANCE ? "A" : "H", bot->GetLevel(), bot->GetName());
+        return;
+    }
+
     bool initialRandom = false;
     if (bot->GetLevel() < sPlayerbotAIConfig.randombotStartingLevel)
         initialRandom = true;
@@ -2482,8 +2489,11 @@ void RandomPlayerbotMgr::UpdateGearSpells(Player* bot)
         SetValue(bot, "level", level);
 
     // schedule randomise
-    uint32 randomTime = urand(sPlayerbotAIConfig.minRandomBotRandomizeTime, sPlayerbotAIConfig.maxRandomBotRandomizeTime);
-    SetEventValue(bot->GetGUIDLow(), "randomize", 1, randomTime);
+    if (level != sPlayerbotAIConfig.randomBotMaxLevel || !sPlayerbotAIConfig.maxLevelNoRandomise)
+    {
+        uint32 randomTime = urand(sPlayerbotAIConfig.minRandomBotRandomizeTime, sPlayerbotAIConfig.maxRandomBotRandomizeTime);
+        SetEventValue(bot->GetGUIDLow(), "randomize", 1, randomTime);
+    }
 
     if (pmo) pmo->finish();
 }

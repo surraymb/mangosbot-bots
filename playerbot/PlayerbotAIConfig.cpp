@@ -142,6 +142,7 @@ bool PlayerbotAIConfig::Initialize()
     usePotionChance = config.GetFloatDefault("AiPlayerbot.UsePotionChance", 1.0f);
     useHSChance = config.GetFloatDefault("AiPlayerbot.UseHSChance", 1.0f);
     freeWorldBuffs = config.GetFloatDefault("AiPlayerbot.freeWorldBuffs", true);
+    maxLevelNoRandomise = config.GetBoolDefault("AiPlayerbot.maxLevelNoRandomise", false);
 
     iterationsPerTick = config.GetIntDefault("AiPlayerbot.IterationsPerTick", 100);
 
