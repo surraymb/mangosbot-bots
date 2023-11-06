@@ -73,6 +73,14 @@ bool EnemyPlayersValue::IsValid(Unit* target, Player* player)
             }
             */
 
+            // Check if too far away (Do we need this?)
+            //const float maxPvPDistance = EnemyPlayerValue::GetMaxAttackDistance(player);
+            //uint32 const pvpDistance = (inCannon || player->GetHealth() > enemyPlayer->GetHealth()) ? maxPvPDistance : 20.0f;
+            //if (!player->IsWithinDist(enemyPlayer, pvpDistance, false))
+            //{
+            //    return false;
+            //}
+
             return true;
         }
     }
@@ -174,13 +182,13 @@ Unit* EnemyPlayerValue::Calculate()
 float EnemyPlayerValue::GetMaxAttackDistance(Player* bot)
 {
     if (!bot->GetBattleGround())
-        return 60.0f;
+        return 25.0f; // default 60
 
     if (bot->InBattleGround())
     {
         BattleGround* bg = bot->GetBattleGround();
         if (!bg)
-            return 40.0f;
+            return 25.0f; // default 40
 
         BattleGroundTypeId bgType = bg->GetTypeId();
 
@@ -196,6 +204,8 @@ float EnemyPlayerValue::GetMaxAttackDistance(Player* bot)
 #endif
         if (bgType == BATTLEGROUND_AV)
         {
+            //bool strifeTime = bg->GetStartTime() < (uint32)(20 * MINUTE * IN_MILLISECONDS);
+            //return strifeTime ? 40.0f : 10.0f;
             bool strifeTime = bg->GetStartTime() < (uint32)(20 * MINUTE * IN_MILLISECONDS);
             return strifeTime ? 40.0f : 10.0f;
         }

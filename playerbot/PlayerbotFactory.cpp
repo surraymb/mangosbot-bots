@@ -1855,9 +1855,9 @@ void PlayerbotFactory::InitEquipment(bool incremental, bool syncWithMaster)
                 quality--;
 
             attempts++;
-            ostringstream out; out << "DEBUG: attempt failed, next attempt #" << attempts;
-            bot->Say(out.str(), LANG_UNIVERSAL);
-        } while (!found && attempts < 8/* && (progressiveGear ? (quality != ITEM_QUALITY_ARTIFACT) : (quality != ITEM_QUALITY_POOR))*/);
+            //ostringstream out; out << "DEBUG: attempt failed, next attempt #" << attempts;
+            //bot->Say(out.str(), LANG_UNIVERSAL);
+        } while (!found && attempts < 3/* && (progressiveGear ? (quality != ITEM_QUALITY_ARTIFACT) : (quality != ITEM_QUALITY_POOR))*/);
         if (!found)
         {
             if (slot != EQUIPMENT_SLOT_TRINKET1 && slot != EQUIPMENT_SLOT_TRINKET2)
