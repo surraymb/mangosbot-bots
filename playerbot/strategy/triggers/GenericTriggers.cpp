@@ -490,10 +490,10 @@ bool TankAssistTrigger::IsActive()
     if (!tankTarget || currentTarget == tankTarget)
         return false;
 #ifdef CMANGOS
-    return currentTarget->GetVictim() == AI_VALUE(Unit*, "self target");
+    return tankTarget->GetVictim() != AI_VALUE(Unit*, "self target");
 #endif
 #ifdef MANGOS
-    return currentTarget->getVictim() == AI_VALUE(Unit*, "self target");
+    return tankTarget->getVictim() != AI_VALUE(Unit*, "self target");
 #endif
 }
 
@@ -726,6 +726,42 @@ bool GreaterBuffOnPartyTrigger::IsActive()
 {
     Unit* target = GetTarget();
     return target && bot->IsInGroup(target) && BuffOnPartyTrigger::IsActive() && !ai->HasAura(lowerSpell, target, false, checkIsOwner);
+}
+
+bool TargetOfAttacker::IsActive()
+{
+    return !GetAttackers().empty();
+}
+
+std::list<Unit*> TargetOfAttacker::GetAttackers()
+{
+    std::list<Unit*> result;
+    const list<ObjectGuid>& attackers = AI_VALUE(list<ObjectGuid>, "attackers");
+    for (const ObjectGuid& attackerGuid : attackers)
+    {
+        // Check against the given creature id
+        Unit* attacker = ai->GetUnit(attackerGuid);
+        if (attacker && (attacker->GetTarget() == bot || attacker->GetVictim() == bot))
+        {
+            result.push_back(attacker);
+        }
+    }
+
+    return result;
+}
+
+bool TargetOfAttackerInRange::IsActive()
+{
+    std::list<Unit*> attackers = GetAttackers();
+    for (Unit* attacker : attackers)
+    {
+        if (bot->GetDistance(attacker, true, DIST_CALC_COMBAT_REACH) <= (distance - sPlayerbotAIConfig.contactDistance))
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 bool TargetOfCastedAuraTypeTrigger::IsActive()
