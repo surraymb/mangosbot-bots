@@ -537,7 +537,7 @@ BattleBotPath vPath_AB_Farm_to_Stable =
     { 1146.02f, 1226.34f, -53.8979f, nullptr },
     { 1167.10f, 1204.31f, -56.55f, nullptr },
 };
-// Blacksmith GY to Mine Road Possible Oneway?
+// Blacksmith GY to Mine Road Possible Oneway? Seems problematic, they sometimes dont enter the water
 BattleBotPath vPath_AB_BlacksmithGY_to_MineRoad =
 {
     { 1007.88f, 968.23f, -43.6135f, nullptr },
@@ -545,6 +545,32 @@ BattleBotPath vPath_AB_BlacksmithGY_to_MineRoad =
     { 998.34f, 921.76f, -63.6415f, nullptr },
     { 993.03f, 876.47f, -68.3664f, nullptr },
     { 984.28f, 849.27f, -64.4121f, nullptr },
+};
+// Blacksmith to water to Stables
+BattleBotPath vPath_AB_Blacksmith_to_Stables_WaterPath =
+{
+    { 982.88f, 1046.23f, -44.4313f, nullptr },
+    { 1034.77f, 1048.13f, -48.9665f, nullptr },
+    { 1017.34f, 1099.76f, -66.9943f, nullptr },
+    { 1002.03f, 1148.47f, -66.2696f, nullptr },
+    { 988.28f, 1192.27f, -48.9962f, nullptr },
+    { 1053.28f, 1209.27f, -52.8887f, nullptr },
+    { 1121.28f, 1226.27f, -47.2665f, nullptr },
+    { 1167.28f, 1201.27f, -56.3957f, nullptr },
+};
+// Blacksmith to water to Lumber Mill
+BattleBotPath vPath_AB_Blacksmith_to_Mill_WaterPath =
+{
+    { 982.88f, 1046.23f, -44.4313f, nullptr },
+    { 1034.77f, 1048.13f, -48.9665f, nullptr },
+    { 1017.34f, 1099.76f, -66.9943f, nullptr },
+    { 1002.03f, 1148.47f, -66.2696f, nullptr },
+    { 988.28f, 1192.27f, -48.9962f, nullptr },
+
+    { 963.28f, 1225.27f, -37.3508f, nullptr },
+    { 923.28f, 1219.27f, -15.2428f, nullptr },
+    { 869.28f, 1188.27f, 9.5954f, nullptr },
+    { 856.28f, 1150.27f, 11.5288f, nullptr },
 };
 // Alliance Base to Gold Mine
 BattleBotPath vPath_AB_AllianceBase_to_GoldMine =
@@ -2155,7 +2181,10 @@ std::vector<BattleBotPath*> const vPaths_AB =
     &vPath_AB_Blacksmith_to_LumberMill,
     &vPath_AB_Blacksmith_to_GoldMine,
     &vPath_AB_Farm_to_Stable,
-    &vPath_AB_BlacksmithGY_to_MineRoad,
+    //&vPath_AB_BlacksmithGY_to_MineRoad,
+    &vPath_AB_Blacksmith_to_Mill_WaterPath,
+    &vPath_AB_Blacksmith_to_Stables_WaterPath,
+
 };
 
 std::vector<BattleBotPath*> const vPaths_AV =
@@ -4875,7 +4904,7 @@ bool BGTactics::atFlag(std::vector<BattleBotPath*> const& vPaths, std::vector<ui
     }
 
     ostringstream out; out << "Found " << closeObjects.size() << " nearby objects";
-    bot->Say(out.str(), LANG_UNIVERSAL);
+    //bot->Say(out.str(), LANG_UNIVERSAL);
 
     for (list<ObjectGuid>::iterator i = closeObjects.begin(); i != closeObjects.end(); ++i)
     {

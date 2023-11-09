@@ -5,13 +5,64 @@
 #include "ChannelMgr.h"
 #include "../../ServerFacade.h"
 #include <regex>
+// GPT Experiment
+#include <iostream>
+#include <string>
+#include <cstdio>
+#include <memory>
+#include <array>
+// GPT Experiment
 
 using namespace ai;
 
-std::unordered_set<std::string> noReplyMsgs = { "join", "leave", "follow", "attack", "pull", "flee", "reset", "reset ai", "all ?"};
-std::unordered_set<std::string> noReplyMsgParts = { "+", "-", "nc" };
+std::unordered_set<std::string> noReplyMsgs = {
+  "join", "leave", "follow", "attack", "pull", "flee", "reset", "reset ai",
+  "all ?", "talents", "talents list", "talents auto", "talk", "stay", "stats",
+  "who", "items", "leave", "join", "repair", "summon", "nc ?", "co ?", "de ?",
+  "dead ?", "follow", "los", "guard", "do accept invitation",
+};
+std::unordered_set<std::string> noReplyMsgParts = { "+", "-", "follow target", "focus heal", "cast ", "accept "};
 
 static string lastReplyMsg = "";
+
+// GPT Experiment Start
+std::string exec(const char* cmd) {
+    std::array<char, 128> buffer;
+    std::string result;
+    FILE* pipe = _popen(cmd, "r"); // Use _popen on Windows
+    if (!pipe) {
+        throw std::runtime_error("_popen() failed!");
+    }
+    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
+        result += buffer.data();
+    }
+    _pclose(pipe); // Use _pclose on Windows
+    return result;
+}
+
+std::string sendToGPT(const std::string& playerMessage) {
+    std::string systemMessage = "You are a character in World of Warcraft and responding to a player's chat message. You represent a player yourself. Return a casual response taking into consideration the tone and context of the player's triggering message.";
+
+    std::string data = "{\"model\": \"gpt-4-1106-preview\","
+        "\"messages\": ["
+        "{\"role\": \"system\", \"content\": \"" + systemMessage + "\"},"
+        "{\"role\": \"user\", \"content\": \"" + playerMessage + "\"}"
+        "],"
+        "\"temperature\": 1,"
+        "\"max_tokens\": 256,"
+        "\"top_p\": 1,"
+        "\"frequency_penalty\": 0,"
+        "\"presence_penalty\": 0"
+        "}";
+
+    std::string command = "curl -X POST 'https://api.openai.com/v1/chat/completions' "
+        "-H 'Content-Type: application/json' "
+        "-H 'Authorization: Bearer GPT_API_KEY' "
+        "--data '" + data + "'";
+
+    return exec(command.c_str());
+}
+// GPT Experiment End
 
 SayAction::SayAction(PlayerbotAI* ai) : Action(ai, "say"), Qualified()
 {
@@ -158,6 +209,21 @@ void ChatReplyAction::ChatReplyDo(Player* bot, uint32 type, uint32 guid1, uint32
 
     out << msg;
     //bot->Say(out.str(), LANG_UNIVERSAL);
+
+
+    // GPT Experiment Start
+    try {
+        std::string response = sendToGPT(msg);
+
+        ostringstream out;
+        out << response;
+        bot->Say(out.str(), LANG_UNIVERSAL);
+    }
+    catch (const std::runtime_error& e) {
+        std::cerr << "Error: " << e.what() << std::endl;
+    }
+    // GPT Experiment End
+
 
     // Chat Logic
     int32 verb_pos = -1;
