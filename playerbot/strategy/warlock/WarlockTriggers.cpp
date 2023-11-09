@@ -46,12 +46,25 @@ bool LifeTapTrigger::IsActive()
 
 bool DrainSoulTrigger::IsActive()
 {
+	/*
+	* for reference
+	ostringstream out;
+	out << "Protecting " << (bot->GetTeam() == ALLIANCE ? "Alliance FC" : "Horde FC");
+	bot->Say(out.str(), LANG_UNIVERSAL);
+	*/
+
+
 	// If no item cheats enabled
     if (!ai->HasCheat(BotCheatMask::item))
     {
 		// Check if it has less than 5 soul shards
         if (!bot->HasItemCount(6265, 5))
         {
+			ostringstream out;
+			out << "DEBUG Checking DrainSoulTrigger::IsActive, counted less than 5 shards";
+			bot->Say(out.str(), LANG_UNIVERSAL);
+
+
 			// Check if it has enough bag space
 			if (AI_VALUE(uint8, "bag space") > 0)
 			{
@@ -59,6 +72,9 @@ bool DrainSoulTrigger::IsActive()
                 const uint32 targetHealth = AI_VALUE2(uint8, "health", "current target");
                 if (targetHealth <= 15)
                 {
+					ostringstream out;
+					out << "DEBUG DrainSoulTrigger valid - enemy health below 15% - draining soul";
+					bot->Say(out.str(), LANG_UNIVERSAL);
                     return true;
                 }
 			}

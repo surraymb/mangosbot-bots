@@ -25,11 +25,13 @@ Position const WS_FLAG_HIDE_HORDE_2 = { 914.954f, 1439.540f, 346.415f, 4.7f };
 Position const WS_FLAG_HIDE_HORDE_3 = { 1163.820f, 1373.625f, 312.23f, 4.7f };
 Position const WS_FLAG_HIDE_HORDE_4 = { 924.0f, 1454.0f, 355.0f, 4.07f };
 Position const WS_FLAG_HIDE_HORDE_5 = { 963.0f, 1421.0f, 367.0f, 4.07f };
+Position const WS_FLAG_HIDE_HORDE_TEST = { 991.0f, 1361.0f, 335.381f, 4.07f };
 Position const WS_FLAG_HIDE_ALLIANCE_1 = { 1529.249f, 1456.470f, 353.04f, 1.25f };
 Position const WS_FLAG_HIDE_ALLIANCE_2 = { 1540.286f, 1476.026f, 352.692f, 2.91f };
 Position const WS_FLAG_HIDE_ALLIANCE_3 = { 1495.807f, 1466.774f, 352.350f, 1.50f };
-Position const WS_FLAG_HIDE_ALLIANCE_4 = { 1531.f, 1463.774f, 362.850f, 1.50f };
-Position const WS_FLAG_HIDE_ALLIANCE_5 = { 1476.f, 1488.f, 373.850f, 1.50f };
+Position const WS_FLAG_HIDE_ALLIANCE_4 = { 1531.0f, 1463.774f, 362.850f, 1.50f };
+Position const WS_FLAG_HIDE_ALLIANCE_5 = { 1476.0f, 1488.0f, 373.850f, 1.50f };
+Position const WS_FLAG_HIDE_ALLIANCE_TEST = { 1451.0f, 1586.0f, 345.667f, 1.50f };
 Position const WS_FLAG_HORDE_ROOF_JUMP_UPPER = { 931.f, 1448.f, 367.850f, 1.50f };
 Position const WS_FLAG_HORDE_ROOF_JUMP_LOWER = { 927.f, 1442.f, 345.850f, 1.50f };
 Position const WS_FLAG_ALLIANCE_ROOF_JUMP_UPPER = { 1523.f, 1467.f, 373.f, 1.50f };
@@ -92,6 +94,8 @@ std::vector<uint32> const vFlagsWS = { GO_WS_SILVERWING_FLAG, GO_WS_WARSONG_FLAG
 std::map<uint32, GameObject*> botSelectedObjectives; // Map bot's GUID to its selected GameObject
 std::map<uint32, uint32> botObjectiveSelectionTime; // Map bot's GUID to the time when it selected the objective
 std::map<uint32, uint32> botLastObjectiveCheckTime; // Tracks the last time each bot checked its objective
+
+const bool firstObjective = false;
 
 
 #ifndef MANGOSBOT_ZERO
@@ -532,6 +536,15 @@ BattleBotPath vPath_AB_Farm_to_Stable =
     { 1098.45f, 1225.47f, -53.1301f, nullptr },
     { 1146.02f, 1226.34f, -53.8979f, nullptr },
     { 1167.10f, 1204.31f, -56.55f, nullptr },
+};
+// Blacksmith GY to Mine Road Possible Oneway?
+BattleBotPath vPath_AB_BlacksmithGY_to_MineRoad =
+{
+    { 1007.88f, 968.23f, -43.6135f, nullptr },
+    { 971.77f, 935.13f, -46.4059f, nullptr },
+    { 998.34f, 921.76f, -63.6415f, nullptr },
+    { 993.03f, 876.47f, -68.3664f, nullptr },
+    { 984.28f, 849.27f, -64.4121f, nullptr },
 };
 // Alliance Base to Gold Mine
 BattleBotPath vPath_AB_AllianceBase_to_GoldMine =
@@ -2142,6 +2155,7 @@ std::vector<BattleBotPath*> const vPaths_AB =
     &vPath_AB_Blacksmith_to_LumberMill,
     &vPath_AB_Blacksmith_to_GoldMine,
     &vPath_AB_Farm_to_Stable,
+    &vPath_AB_BlacksmithGY_to_MineRoad,
 };
 
 std::vector<BattleBotPath*> const vPaths_AV =
@@ -3346,12 +3360,20 @@ bool BGTactics::selectObjective(bool reset)
 
         if (bot->HasAura(BG_WS_SPELL_WARSONG_FLAG) || bot->HasAura(BG_WS_SPELL_SILVERWING_FLAG))
         {
+            ostringstream out;
+            out << "DEBUG I have the flag!";
+            bot->Say(out.str(), LANG_UNIVERSAL);
+
             if (bot->GetTeam() == ALLIANCE)
             {
                 if (teamFlagTaken())
                 {
-                    Position hidePos = WS_FLAG_HIDE_ALLIANCE[urand(0, 4)];
-                    pos.Set(hidePos.x, hidePos.y, hidePos.z, bot->GetMapId());
+                    out << "DEBUG Horde has our flag, so I should hide. Moving to TEST hiding spot behind our GY.";
+                    bot->Say(out.str(), LANG_UNIVERSAL);
+
+                    //Position hidePos = WS_FLAG_HIDE_ALLIANCE[urand(0, 4)];
+                    //pos.Set(hidePos.x, hidePos.y, hidePos.z, bot->GetMapId());
+                    pos.Set(WS_FLAG_HIDE_ALLIANCE_TEST.x, WS_FLAG_HIDE_ALLIANCE_TEST.y, WS_FLAG_HIDE_ALLIANCE_TEST.z, bot->GetMapId());
                 }
                 else
                     pos.Set(WS_FLAG_POS_ALLIANCE.x, WS_FLAG_POS_ALLIANCE.y, WS_FLAG_POS_ALLIANCE.z, bot->GetMapId());
@@ -3360,8 +3382,12 @@ bool BGTactics::selectObjective(bool reset)
             {
                 if (teamFlagTaken())
                 {
-                    Position hidePos = WS_FLAG_HIDE_HORDE[urand(0, 4)];
-                    pos.Set(hidePos.x, hidePos.y, hidePos.z, bot->GetMapId());
+                    out << "DEBUG Alliance has our flag, so I should hide. Moving to TEST hiding spot behind our GY.";
+                    bot->Say(out.str(), LANG_UNIVERSAL);
+
+                    //Position hidePos = WS_FLAG_HIDE_HORDE[urand(0, 4)];
+                    //pos.Set(hidePos.x, hidePos.y, hidePos.z, bot->GetMapId());
+                    pos.Set(WS_FLAG_HIDE_HORDE_TEST.x, WS_FLAG_HIDE_HORDE_TEST.y, WS_FLAG_HIDE_HORDE_TEST.z, bot->GetMapId());
                 }
                 else
                     pos.Set(WS_FLAG_POS_HORDE.x, WS_FLAG_POS_HORDE.y, WS_FLAG_POS_HORDE.z, bot->GetMapId());
@@ -3467,7 +3493,7 @@ bool BGTactics::selectObjective(bool reset)
     {
         // Common setup for both HORDE and ALLIANCE
         uint32 role = context->GetValue<uint32>("bg role")->Get();
-        bool defender = role < 4;
+        bool defender = role < 5;
 
         std::set<GameObject*> uniqueObjectives;
 
@@ -3507,9 +3533,9 @@ bool BGTactics::selectObjective(bool reset)
 
             if (lastObjDist < 50.00f)
             {
-                if (elapsedTime > 70000)
+                if (elapsedTime > 50000)
                 {
-                    uint32 extraTime = (elapsedTime - 70000) / 1000; // Calculate seconds past the 40 seconds mark
+                    uint32 extraTime = (elapsedTime - 50000) / 1000; // Calculate seconds past the 40 seconds mark
                     probabilityToKeepSameObjective -= (0.01f * extraTime); // Decrease by 1% for each second past 40 seconds
                 }
 
@@ -3519,12 +3545,13 @@ bool BGTactics::selectObjective(bool reset)
                 {
                     BgObjective = botSelectedObjectives[botGUID];
                 }
+                else uniqueObjectives.erase(lastObj);
             }
             else
             {
-                if (elapsedTime > 40000)
+                if (elapsedTime > 20000)
                 {
-                    uint32 extraTime = (elapsedTime - 40000) / 1000; // Calculate seconds past the 40 seconds mark
+                    uint32 extraTime = (elapsedTime - 20000) / 1000; // Calculate seconds past the 40 seconds mark
                     probabilityToKeepSameObjective -= (0.01f * extraTime); // Decrease by 1% for each second past 40 seconds
                 }
 
@@ -3534,6 +3561,7 @@ bool BGTactics::selectObjective(bool reset)
                 {
                     BgObjective = botSelectedObjectives[botGUID];
                 }
+                else uniqueObjectives.erase(lastObj);
             }
         }
 
@@ -4706,10 +4734,10 @@ bool BGTactics::startNewPathBegin(std::vector<BattleBotPath*> const& vPaths)
     for (const auto& pPath : vPaths)
     {
         // skip mine paths of own faction
-        if (bot->GetTeam() == ALLIANCE && std::find(vPaths_AllyMine.begin(), vPaths_AllyMine.end(), pPath) != vPaths_AllyMine.end())
-            continue;
-        if (bot->GetTeam() == HORDE && std::find(vPaths_HordeMine.begin(), vPaths_HordeMine.end(), pPath) != vPaths_HordeMine.end())
-            continue;
+        //if (bot->GetTeam() == ALLIANCE && std::find(vPaths_AllyMine.begin(), vPaths_AllyMine.end(), pPath) != vPaths_AllyMine.end())
+        //    continue;
+        //if (bot->GetTeam() == HORDE && std::find(vPaths_HordeMine.begin(), vPaths_HordeMine.end(), pPath) != vPaths_HordeMine.end())
+        //    continue;
 
         BattleBotWaypoint* pStart = &((*pPath)[0]);
         if (sqrt(bot->GetDistance(pStart->x, pStart->y, pStart->z, DIST_CALC_NONE)) < INTERACTION_DISTANCE)
@@ -4759,11 +4787,11 @@ bool BGTactics::startNewPathFree(std::vector<BattleBotPath*> const& vPaths)
 
     for (const auto& pPath : vPaths)
     {
-        // skip mine paths of own faction
-        if (bot->GetTeam() == ALLIANCE && std::find(vPaths_AllyMine.begin(), vPaths_AllyMine.end(), pPath) != vPaths_AllyMine.end())
-            continue;
-        if (bot->GetTeam() == HORDE && std::find(vPaths_HordeMine.begin(), vPaths_HordeMine.end(), pPath) != vPaths_HordeMine.end())
-            continue;
+        // skip mine paths of own faction - disabled, why skip them?
+        //if (bot->GetTeam() == ALLIANCE && std::find(vPaths_AllyMine.begin(), vPaths_AllyMine.end(), pPath) != vPaths_AllyMine.end())
+        //    continue;
+        //if (bot->GetTeam() == HORDE && std::find(vPaths_HordeMine.begin(), vPaths_HordeMine.end(), pPath) != vPaths_HordeMine.end())
+        //    continue;
 
         for (uint32 i = 0; i < pPath->size(); i++)
         {
@@ -4846,8 +4874,8 @@ bool BGTactics::atFlag(std::vector<BattleBotPath*> const& vPaths, std::vector<ui
         }
     }
 
-    //ostringstream out; out << "Found " << closeObjects.size() << " nearby objects";
-    //bot->Say(out.str(), LANG_UNIVERSAL);
+    ostringstream out; out << "Found " << closeObjects.size() << " nearby objects";
+    bot->Say(out.str(), LANG_UNIVERSAL);
 
     for (list<ObjectGuid>::iterator i = closeObjects.begin(); i != closeObjects.end(); ++i)
     {
@@ -4893,8 +4921,8 @@ bool BGTactics::atFlag(std::vector<BattleBotPath*> const& vPaths, std::vector<ui
             if (bot->IsInDisallowedMountForm())
                 bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
 
-            //ostringstream out; out << "Flag is nearby, using " << go->GetName();
-            //bot->Say(out.str(), LANG_UNIVERSAL);
+            ostringstream out; out << "Flag is nearby, using " << go->GetName();
+            bot->Say(out.str(), LANG_UNIVERSAL);
             //SetDuration(10000);
 
             // cast banner spell

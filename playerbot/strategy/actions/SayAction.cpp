@@ -8,6 +8,11 @@
 
 using namespace ai;
 
+std::unordered_set<std::string> noReplyMsgs = { "join", "leave", "follow", "attack", "pull", "flee", "reset", "reset ai", "all ?"};
+std::unordered_set<std::string> noReplyMsgParts = { "+", "-", "nc" };
+
+static string lastReplyMsg = "";
+
 SayAction::SayAction(PlayerbotAI* ai) : Action(ai, "say"), Qualified()
 {
 }
@@ -111,6 +116,48 @@ void ChatReplyAction::ChatReplyDo(Player* bot, uint32 type, uint32 guid1, uint32
 {
     ChatReplyType replyType = REPLY_NOT_UNDERSTAND; // default not understand
     std::string respondsText = "";
+
+    // if we're just commanding bots around, don't respond...
+    // first one is for exact word matches
+    if (noReplyMsgs.find(msg) != noReplyMsgs.end()) {
+        ostringstream out;
+        out << "DEBUG ChatReplyDo decided to ignore exact blocklist match";
+        //bot->Say(out.str(), LANG_UNIVERSAL);
+        return;
+    }
+
+    // second one is for partial matches like + or - where we change strats
+    if (std::any_of(noReplyMsgParts.begin(), noReplyMsgParts.end(), [&msg](const std::string& part) { return msg.find(part) != std::string::npos; })) {
+        ostringstream out;
+        out << "DEBUG ChatReplyDo decided to ignore partial blocklist match";
+        //bot->Say(out.str(), LANG_UNIVERSAL);
+        return;
+    }
+
+    // check if msg has already been replied to by somebody else 
+    // ? maybe let another bot reply taking into consideration that it was already replied to
+    if (lastReplyMsg != "")
+    {
+        if (lastReplyMsg == msg)
+        {
+            ostringstream out;
+            out << "DEBUG ChatReplyDo msg has already been replied to, skipping";
+            //bot->Say(out.str(), LANG_UNIVERSAL);
+
+            return;
+        }
+    }
+
+    
+
+
+    // DEBUG
+    ostringstream out; 
+    out << "DEBUG ChatReplyDo triggered, trying respond to following string:";
+    // bot->Say(out.str(), LANG_UNIVERSAL);
+
+    out << msg;
+    //bot->Say(out.str(), LANG_UNIVERSAL);
 
     // Chat Logic
     int32 verb_pos = -1;
