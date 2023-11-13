@@ -2446,7 +2446,7 @@ void RandomPlayerbotMgr::Randomize(Player* bot)
 
     if (bot->GetLevel() == sPlayerbotAIConfig.randomBotMaxLevel && sPlayerbotAIConfig.maxLevelNoRandomise)
     {
-        sLog.outBasic("Bot #%d %s:%d <%s>: skipped randomise on max level bot", bot->GetGUIDLow(), bot->GetTeam() == ALLIANCE ? "A" : "H", bot->GetLevel(), bot->GetName());
+        //sLog.outBasic("Bot #%d %s:%d <%s>: skipped randomise on max level bot", bot->GetGUIDLow(), bot->GetTeam() == ALLIANCE ? "A" : "H", bot->GetLevel(), bot->GetName());
         return;
     }
 

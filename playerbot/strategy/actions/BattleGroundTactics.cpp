@@ -566,7 +566,6 @@ BattleBotPath vPath_AB_Blacksmith_to_Mill_WaterPath =
     { 1017.34f, 1099.76f, -66.9943f, nullptr },
     { 1002.03f, 1148.47f, -66.2696f, nullptr },
     { 988.28f, 1192.27f, -48.9962f, nullptr },
-
     { 963.28f, 1225.27f, -37.3508f, nullptr },
     { 923.28f, 1219.27f, -15.2428f, nullptr },
     { 869.28f, 1188.27f, 9.5954f, nullptr },
@@ -2181,9 +2180,10 @@ std::vector<BattleBotPath*> const vPaths_AB =
     &vPath_AB_Blacksmith_to_LumberMill,
     &vPath_AB_Blacksmith_to_GoldMine,
     &vPath_AB_Farm_to_Stable,
+    //tried adding these but the bots don't go in the water, look into how to make this happen
     //&vPath_AB_BlacksmithGY_to_MineRoad,
-    &vPath_AB_Blacksmith_to_Mill_WaterPath,
-    &vPath_AB_Blacksmith_to_Stables_WaterPath,
+    //&vPath_AB_Blacksmith_to_Mill_WaterPath,
+    //&vPath_AB_Blacksmith_to_Stables_WaterPath,
 
 };
 
@@ -4950,8 +4950,8 @@ bool BGTactics::atFlag(std::vector<BattleBotPath*> const& vPaths, std::vector<ui
             if (bot->IsInDisallowedMountForm())
                 bot->RemoveSpellsCausingAura(SPELL_AURA_MOD_SHAPESHIFT);
 
-            ostringstream out; out << "Flag is nearby, using " << go->GetName();
-            bot->Say(out.str(), LANG_UNIVERSAL);
+            //ostringstream out; out << "Flag is nearby, using " << go->GetName();
+            //bot->Say(out.str(), LANG_UNIVERSAL);
             //SetDuration(10000);
 
             // cast banner spell

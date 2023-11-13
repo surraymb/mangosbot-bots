@@ -5,6 +5,7 @@
 #include "ChannelMgr.h"
 #include "../../ServerFacade.h"
 #include <regex>
+/*
 // GPT Experiment
 #include <iostream>
 #include <string>
@@ -12,6 +13,12 @@
 #include <memory>
 #include <array>
 // GPT Experiment
+*/
+#include <iostream>
+#include <string>
+#include <sstream>
+#include <nlohmann/json.hpp>
+#include <curl/curl.h>
 
 using namespace ai;
 
@@ -19,50 +26,14 @@ std::unordered_set<std::string> noReplyMsgs = {
   "join", "leave", "follow", "attack", "pull", "flee", "reset", "reset ai",
   "all ?", "talents", "talents list", "talents auto", "talk", "stay", "stats",
   "who", "items", "leave", "join", "repair", "summon", "nc ?", "co ?", "de ?",
-  "dead ?", "follow", "los", "guard", "do accept invitation",
+  "dead ?", "follow", "los", "guard", "do accept invitation", "stats", "react ?", 
+  "reset strats", "home",
 };
-std::unordered_set<std::string> noReplyMsgParts = { "+", "-", "follow target", "focus heal", "cast ", "accept "};
+std::unordered_set<std::string> noReplyMsgParts = { "+", "-", "follow target", "focus heal", "cast ", "accept [", "e [", "destroy [", "go zone"};
+
+std::unordered_set<std::string> noReplyMsgStarts = { "e ", "accept ", "cast ", "destroy "};
 
 static string lastReplyMsg = "";
-
-// GPT Experiment Start
-std::string exec(const char* cmd) {
-    std::array<char, 128> buffer;
-    std::string result;
-    FILE* pipe = _popen(cmd, "r"); // Use _popen on Windows
-    if (!pipe) {
-        throw std::runtime_error("_popen() failed!");
-    }
-    while (fgets(buffer.data(), buffer.size(), pipe) != nullptr) {
-        result += buffer.data();
-    }
-    _pclose(pipe); // Use _pclose on Windows
-    return result;
-}
-
-std::string sendToGPT(const std::string& playerMessage) {
-    std::string systemMessage = "You are a character in World of Warcraft and responding to a player's chat message. You represent a player yourself. Return a casual response taking into consideration the tone and context of the player's triggering message.";
-
-    std::string data = "{\"model\": \"gpt-4-1106-preview\","
-        "\"messages\": ["
-        "{\"role\": \"system\", \"content\": \"" + systemMessage + "\"},"
-        "{\"role\": \"user\", \"content\": \"" + playerMessage + "\"}"
-        "],"
-        "\"temperature\": 1,"
-        "\"max_tokens\": 256,"
-        "\"top_p\": 1,"
-        "\"frequency_penalty\": 0,"
-        "\"presence_penalty\": 0"
-        "}";
-
-    std::string command = "curl -X POST 'https://api.openai.com/v1/chat/completions' "
-        "-H 'Content-Type: application/json' "
-        "-H 'Authorization: Bearer GPT_API_KEY' "
-        "--data '" + data + "'";
-
-    return exec(command.c_str());
-}
-// GPT Experiment End
 
 SayAction::SayAction(PlayerbotAI* ai) : Action(ai, "say"), Qualified()
 {
@@ -163,16 +134,48 @@ bool SayAction::isUseful()
     return (time(0) - lastSaid) > 30;
 }
 
+size_t WriteCallback(char* ptr, size_t size, size_t nmemb, void* userdata) {
+    std::string* response = static_cast<std::string*>(userdata);
+    size_t realSize = size * nmemb;
+    response->append(ptr, realSize);
+    return realSize;
+}
+
 void ChatReplyAction::ChatReplyDo(Player* bot, uint32 type, uint32 guid1, uint32 guid2, std::string msg, std::string chanName, std::string name)
 {
     ChatReplyType replyType = REPLY_NOT_UNDERSTAND; // default not understand
     std::string respondsText = "";
 
+    PlayerbotAI* ai = bot->GetPlayerbotAI();
+    Player* bMaster;
+    uint32 masterID;
+
+    Group* group = bot->GetGroup();
+    if (group)
+    {
+        Player* bMaster = ai->GetGroupMaster();
+        uint32 masterID = bMaster->GetGUIDLow();
+    }
+
+    uint32 botID;
+
+    try
+    {
+        botID = bot->GetGUIDLow(); // crash?
+    }
+    catch (exception e)
+    {
+        return;
+    }
+
+    std::string botName = bot->GetName();
+
+
     // if we're just commanding bots around, don't respond...
     // first one is for exact word matches
     if (noReplyMsgs.find(msg) != noReplyMsgs.end()) {
         ostringstream out;
-        out << "DEBUG ChatReplyDo decided to ignore exact blocklist match";
+        out << "DEBUG ChatReplyDo decided to ignore exact blocklist match" << msg;
         //bot->Say(out.str(), LANG_UNIVERSAL);
         return;
     }
@@ -180,7 +183,17 @@ void ChatReplyAction::ChatReplyDo(Player* bot, uint32 type, uint32 guid1, uint32
     // second one is for partial matches like + or - where we change strats
     if (std::any_of(noReplyMsgParts.begin(), noReplyMsgParts.end(), [&msg](const std::string& part) { return msg.find(part) != std::string::npos; })) {
         ostringstream out;
-        out << "DEBUG ChatReplyDo decided to ignore partial blocklist match";
+        out << "DEBUG ChatReplyDo decided to ignore partial blocklist match" << msg;
+        //bot->Say(out.str(), LANG_UNIVERSAL);
+
+        return;
+    }
+
+    if (std::any_of(noReplyMsgStarts.begin(), noReplyMsgStarts.end(), [&msg](const std::string& start) {
+        return msg.find(start) == 0;  // Check if the start matches the beginning of msg
+        })) {
+        ostringstream out;
+        out << "DEBUG ChatReplyDo decided to ignore start blocklist match" << msg;
         //bot->Say(out.str(), LANG_UNIVERSAL);
         return;
     }
@@ -199,11 +212,11 @@ void ChatReplyAction::ChatReplyDo(Player* bot, uint32 type, uint32 guid1, uint32
         }
     }
 
-    
+
 
 
     // DEBUG
-    ostringstream out; 
+    ostringstream out;
     out << "DEBUG ChatReplyDo triggered, trying respond to following string:";
     // bot->Say(out.str(), LANG_UNIVERSAL);
 
@@ -211,17 +224,287 @@ void ChatReplyAction::ChatReplyDo(Player* bot, uint32 type, uint32 guid1, uint32
     //bot->Say(out.str(), LANG_UNIVERSAL);
 
 
-    // GPT Experiment Start
-    try {
-        std::string response = sendToGPT(msg);
+    // filter by name or IDs...
+    //if (name == "Jehuty" || "Ariderion")
+    if (group)
+    {
+        if ((masterID > 4500 && masterID < 4600) && (botID > 4500 && botID < 4600))
+        {
 
-        ostringstream out;
-        out << response;
-        bot->Say(out.str(), LANG_UNIVERSAL);
+            // GPT Experiment Start
+            //try {
+            //    std::string response = sendToGPT(msg);
+
+            //    ostringstream out;
+            //    out << response;
+            //    bot->Say(out.str(), LANG_UNIVERSAL);
+            //}
+            //catch (const std::runtime_error& e) {
+            //    std::cerr << "Error: " << e.what() << std::endl;
+            //}
+
+            uint32 botLevel = bot->GetLevel();
+            string botLevelString = std::to_string(botLevel);
+            uint8 botClass = bot->getClass();
+            string botClassString = "";
+            uint8 botRace = bot->getRace();
+            string botRaceString = "";
+            uint8 botGender = bot->getGender();
+            string botGenderString = "";
+
+            uint32 botZone = bot->GetZoneId();
+            string botZoneString = std::to_string(botZone);
+
+            switch (botClass) {
+            case CLASS_WARRIOR:
+                botClassString = "Warrior";
+                break;
+            case CLASS_PALADIN:
+                botClassString = "Paladin";
+                break;
+            case CLASS_HUNTER:
+                botClassString = "Hunter";
+                break;
+            case CLASS_ROGUE:
+                botClassString = "Rogue";
+                break;
+            case CLASS_PRIEST:
+                botClassString = "Priest";
+                break;
+            case CLASS_SHAMAN:
+                botClassString = "Shaman";
+                break;
+            case CLASS_MAGE:
+                botClassString = "Mage";
+                break;
+            case CLASS_WARLOCK:
+                botClassString = "Warlock";
+                break;
+            case CLASS_DRUID:
+                botClassString = "Druid";
+                break;
+            default:
+                botClassString = "Unknown Class";
+            }
+
+            switch (botRace) {
+            case RACE_HUMAN:
+                botRaceString = "Human";
+                break;
+            case RACE_ORC:
+                botRaceString = "Orc";
+                break;
+            case RACE_DWARF:
+                botRaceString = "Dwarf";
+                break;
+            case RACE_NIGHTELF:
+                botRaceString = "Night Elf";
+                break;
+            case RACE_UNDEAD:
+                botRaceString = "Undead";
+                break;
+            case RACE_TAUREN:
+                botRaceString = "Tauren";
+                break;
+            case RACE_GNOME:
+                botRaceString = "Gnome";
+                break;
+            case RACE_TROLL:
+                botRaceString = "Troll";
+                break;
+            default:
+                botRaceString = "Unknown Race";
+            }
+
+
+            if (botGender == GENDER_MALE)
+                botGenderString = "male";
+            else botGenderString = "female";
+
+            std::string prevDialogueContext;
+            auto prevDialogueValue = bot->GetPlayerbotAI()->GetAiObjectContext()->GetValue<std::string>("prev dialogue", "GPT");
+
+            // Check if the value exists
+            if (prevDialogueValue) {
+                // If it exists, get the current value
+                prevDialogueContext = prevDialogueValue->Get();
+            }
+            else {
+                // If not, initialize it to an empty string
+                prevDialogueContext = "";
+            }
+
+            try {
+                // Concatenate the player's name with the system message
+                std::string systemMessage = "You are " + botName + ", a level " + botLevelString + " " + botRaceString + " " + botClassString + " in ZoneID " + botZoneString + " Vanilla WoW. Respond to the player's chat message in 1 or 2 lines max. The player's name is " + name + ". Stay in character. The previous dialogue was: " + prevDialogueContext;
+
+                if (strstr(bot->GetName(), "Yueh") != nullptr)
+                    systemMessage = "You are Yueh, a lvl60 human male Holy Priest in Vanilla WoW. You are calm and calculated, well articulated and to the point. Respond to the player. 1-2 lines max. Others may be adressed as well. Location: " + botZoneString + ", Player name: " + name;
+
+                if (strstr(bot->GetName(), "Paul") != nullptr)
+                    systemMessage = "You are Paul, a lvl60 human holy Paladin in Vanilla WoW. You are a philosopher, favoring zensunni teachings from Frank Herbert's Dune to guide your thoughts. Respond to the player. 1-2 lines max. Others may be adressed as well. Location: " + botZoneString + ", Player name: " + name;
+
+                if (strstr(bot->GetName(), "Sarrica") != nullptr)
+                    systemMessage = "You are Sarrica, a reticent lvl60 night elf male DPS Warrior in Vanilla WoW, as Sentinel of Darnassus you are a calm but deadly warrior, who will do what is necessary to protect his people.. 1-2 lines max. Respond to the player's chat message. Others may be adressed as well. Location: " + botZoneString + ", Player name: " + name;
+
+                // Set up the JSON payload with your messages
+                nlohmann::json json_payload = {
+                    {"model", "gpt-4-1106-preview"},
+                    {"messages", {
+                        {
+                            {"role", "system"},
+                            {"content", systemMessage}
+                        },
+                        {
+                            {"role", "user"},
+                            {"content", msg}
+                        }
+                    }},
+                    {"temperature", 1},
+                    {"max_tokens", 256},
+                    {"top_p", 1},
+                    {"frequency_penalty", 0},
+                    {"presence_penalty", 0}
+                };
+
+
+
+                char* env_api_key = std::getenv("WOW_API_KEY");
+                std::string api_key(env_api_key);
+
+                // Convert JSON payload to string
+                std::string payload_string = json_payload.dump();
+
+                // Initialize CURL
+                CURL* curl = curl_easy_init();
+                if (curl) {
+                    // Set the URL and other HTTP request properties
+                    curl_easy_setopt(curl, CURLOPT_URL, "https://api.openai.com/v1/chat/completions");
+                    curl_easy_setopt(curl, CURLOPT_POST, 1L);
+                    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)payload_string.size());
+                    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, payload_string.c_str());
+
+                    struct curl_slist* headers = NULL;
+                    headers = curl_slist_append(headers, "Content-Type: application/json");
+                    std::string auth_header = "Authorization: Bearer " + api_key;
+                    headers = curl_slist_append(headers, auth_header.c_str());
+                    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+                    // Set up to capture the response
+                    std::string response_string;
+                    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteCallback);
+                    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_string);
+
+                    // Perform the request
+                    CURLcode res = curl_easy_perform(curl);
+
+                    // Check for errors
+                    if (res != CURLE_OK)
+                        std::cerr << "curl_easy_perform() failed: " << curl_easy_strerror(res) << std::endl;
+
+                    // Cleanup
+                    curl_easy_cleanup(curl);
+                    curl_slist_free_all(headers);
+
+                    // Parse the response into JSON
+                    auto response_json = nlohmann::json::parse(response_string);
+
+                    // Extract the text from the response
+                    std::string response_text = response_json["choices"][0]["message"]["content"];
+
+                    // Output the response text to console
+                    std::cout << "Response: " << response_text << std::endl;
+
+                    //ostringstream out; out << response_text;
+                    //bot->Say(out.str(), LANG_UNIVERSAL);
+
+                    if (!response_text.empty())
+                    {
+                        const char* c = response_text.c_str();
+                        if (strlen(c) > 255)
+                            return;
+
+                        if (chanName == "World")
+                        {
+                            return;
+                        }
+                        else
+                        {
+                            if (type == CHAT_MSG_PARTY)
+                            {
+                                WorldPacket data;
+                                ChatHandler::BuildChatPacket(data, bot->GetGroup()->IsRaidGroup() ? CHAT_MSG_RAID : CHAT_MSG_PARTY, response_text.c_str(), LANG_UNIVERSAL, CHAT_TAG_NONE, bot->GetObjectGuid(), bot->GetName());
+                                bot->GetGroup()->BroadcastPacket(data, true);
+
+                            }
+                            if (type == CHAT_MSG_WHISPER)
+                            {
+                                ObjectGuid receiver = sObjectMgr.GetPlayerGuidByName(name.c_str());
+                                Player* rPlayer = sObjectMgr.GetPlayer(receiver);
+                                if (rPlayer)
+                                {
+                                    if (bot->GetTeam() == ALLIANCE)
+                                    {
+                                        bot->Whisper(c, LANG_COMMON, receiver);
+                                    }
+                                    else
+                                    {
+                                        bot->Whisper(c, LANG_ORCISH, receiver);
+                                    }
+                                }
+                            }
+
+                            if (type == CHAT_MSG_SAY)
+                            {
+                                if (bot->GetTeam() == ALLIANCE)
+                                    bot->Say(response_text, LANG_COMMON);
+                                else
+                                    bot->Say(response_text, LANG_ORCISH);
+                            }
+
+                            if (type == CHAT_MSG_YELL)
+                            {
+                                if (bot->GetTeam() == ALLIANCE)
+                                    bot->Yell(response_text, LANG_COMMON);
+                                else
+                                    bot->Yell(response_text, LANG_ORCISH);
+                            }
+
+                            if (type == CHAT_MSG_GUILD)
+                            {
+                                if (!bot->GetGuildId())
+                                    return;
+
+                                if (Guild* guild = sGuildMgr.GetGuildById(bot->GetGuildId()))
+                                    guild->BroadcastToGuild(bot->GetSession(), response_text, LANG_UNIVERSAL);
+                            }
+                        }
+
+                        std::string appendDialogueContext = name + ": " + msg + " - " + botName + ": " + response_text;
+                        const size_t maxContextLength = 512;
+
+                        // Append the new line to the existing dialogue
+                        prevDialogueContext += " | " + appendDialogueContext; // Using '|' as a separator, you can choose your own
+
+                        if (prevDialogueContext.length() > maxContextLength) {
+                            // Keep only the last 'maxLength' characters
+                            prevDialogueContext = prevDialogueContext.substr(prevDialogueContext.length() - maxContextLength);
+                        }
+                        bot->GetPlayerbotAI()->GetAiObjectContext()->GetValue<std::string>("prev dialogue", "GPT")->Set(prevDialogueContext);
+
+                        bot->GetPlayerbotAI()->GetAiObjectContext()->GetValue<time_t>("last said", "chat")->Set(time(0) + urand(5, 15));
+                        return;
+                    }
+                }
+            }
+            catch (std::exception& e) {
+                std::cerr << "Error: " << e.what() << std::endl;
+            }
+
+        }
     }
-    catch (const std::runtime_error& e) {
-        std::cerr << "Error: " << e.what() << std::endl;
-    }
+
+    
     // GPT Experiment End
 
 

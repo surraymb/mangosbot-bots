@@ -250,6 +250,7 @@ namespace ai
             creators["speed"] = &ValueContext::speed;
             creators["last said"] = &ValueContext::last_said;
             creators["last emote"] = &ValueContext::last_emote;
+            creators["prev dialogue"] = &ValueContext::prev_dialogue;
 
             creators["aoe count"] = &ValueContext::aoe_count;
             creators["aoe position"] = &ValueContext::aoe_position;
@@ -542,6 +543,7 @@ namespace ai
         static UntypedValue* speed(PlayerbotAI* ai) { return new SpeedValue(ai); }
         static UntypedValue* last_said(PlayerbotAI* ai) { return new LastSaidValue(ai); }
         static UntypedValue* last_emote(PlayerbotAI* ai) { return new LastEmoteValue(ai); }
+        static UntypedValue* prev_dialogue(PlayerbotAI* ai) { return new PrevDialogueValue(ai); }
         static UntypedValue* aoe_count(PlayerbotAI* ai) { return new AoeCountValue(ai); }
         static UntypedValue* aoe_position(PlayerbotAI* ai) { return new AoePositionValue(ai); }
         static UntypedValue* outfit_list_value(PlayerbotAI* ai) { return new OutfitListValue(ai); }

@@ -14,4 +14,10 @@ namespace ai
 	public:
         LastEmoteValue(PlayerbotAI* ai) : ManualSetValue<time_t>(ai, time(0) - 120, "last emote"), Qualified() {}
     };
+
+    class PrevDialogueValue : public ManualSetValue<std::string>, public Qualified
+    {
+    public:
+        PrevDialogueValue(PlayerbotAI* ai) : ManualSetValue<std::string>(ai, "", "prev dialogue"), Qualified() {}
+    };
 }

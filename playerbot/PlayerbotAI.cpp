@@ -1371,9 +1371,18 @@ void PlayerbotAI::HandleBotOutgoingPacket(const WorldPacket& packet)
                 uint32 accountId = sObjectMgr.GetPlayerAccountIdByGUID(guid1);
                 isFreeBot = sPlayerbotAIConfig.IsInRandomAccountList(accountId);
                 if (!isFreeBot)
-                    isFreeBot = sPlayerbotAIConfig.IsFreeAltBot(guid1);
+                    isFreeBot = sPlayerbotAIConfig.IsFreeAltBot(guid2);
 
                 bool isMentioned = message.find(bot->GetName()) != std::string::npos;
+
+                //auto botGroup = bot->GetGroup(); names of group members?
+
+                if (isMentioned && !sPlayerbotAIConfig.IsInRandomAccountList(guid1))
+                {
+                    QueueChatResponse(msgtype, guid1, ObjectGuid(), message, chanName, name);
+                    GetAiObjectContext()->GetValue<time_t>("last said", "chat")->Set(time(0) + urand(5, 10));
+                    return;
+                }
 
                 // random bot speaks, chat CD
                 if (isFreeBot && isPaused)
