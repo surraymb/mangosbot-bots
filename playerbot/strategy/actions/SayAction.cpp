@@ -150,11 +150,12 @@ void ChatReplyAction::ChatReplyDo(Player* bot, uint32 type, uint32 guid1, uint32
     Player* bMaster;
     uint32 masterID;
 
+    /*
     Group* group = bot->GetGroup();
     if (group)
     {
         Player* bMaster = ai->GetGroupMaster();
-        uint32 masterID = bMaster->GetGUIDLow();
+        uint32 masterID = bMaster->GetGUIDLow(); // or crash here maybe?
     }
 
     uint32 botID;
@@ -504,7 +505,7 @@ void ChatReplyAction::ChatReplyDo(Player* bot, uint32 type, uint32 guid1, uint32
         }
     }
 
-    
+    */
     // GPT Experiment End
 
 

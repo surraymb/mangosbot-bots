@@ -2745,6 +2745,60 @@ bool BGTactics::wsgRoofJump()
     return false;
 }
 
+bool BGTactics::ABSwimPath()
+{
+    BattleGround* bg = bot->GetBattleGround();
+    if (!bg)
+        return false;
+
+    ai::PositionEntry pos = context->GetValue<ai::PositionMap&>("position")->Get()["bg objective"]; // does this work in AB?
+
+    uint32 Preference = context->GetValue<uint32>("bg role")->Get();
+
+    bool atHordeSecondFloorJump = bot->GetPositionX() < 933.f && bot->GetPositionY() > 1450.f && bot->GetPositionZ() > 354.f;
+    bool atAllianceSecondFloorJump = bot->GetPositionX() > 1522.f && bot->GetPositionY() < 1468.f && bot->GetPositionZ() > 361.f;
+    bool atHordeRoof = bot->GetPositionX() < 987.f && bot->GetPositionY() > 1417.f && bot->GetPositionZ() > 364.f;
+    bool atAllianceRoof = bot->GetPositionX() > 1465.f && bot->GetPositionZ() > 370.f;
+    bool inCombat = bot->IsInCombat();
+
+    if (atHordeRoof && (!inCombat || (pos.z < 365.f && pos.x > 987.f)))
+    {
+        // not at jump point
+        if (bot->GetPositionX() > 933.f || bot->GetPositionY() > 1450.f)
+            return MoveTo(bg->GetMapId(), WS_FLAG_HORDE_ROOF_JUMP_UPPER.x, WS_FLAG_HORDE_ROOF_JUMP_UPPER.y, WS_FLAG_HORDE_ROOF_JUMP_UPPER.z);
+        else
+            return MoveTo(bg->GetMapId(), WS_FLAG_HORDE_ROOF_JUMP_LOWER.x, WS_FLAG_HORDE_ROOF_JUMP_LOWER.y, WS_FLAG_HORDE_ROOF_JUMP_LOWER.z, false, false, true);
+    }
+
+    if (atAllianceRoof && (!inCombat || (pos.z < 372.f && pos.x < 1465.f)))
+    {
+        // not at jump point
+        if (bot->GetPositionX() < 1521.f || bot->GetPositionY() > 1467.f)
+            return MoveTo(bg->GetMapId(), WS_FLAG_ALLIANCE_ROOF_JUMP_UPPER.x, WS_FLAG_ALLIANCE_ROOF_JUMP_UPPER.y, WS_FLAG_ALLIANCE_ROOF_JUMP_UPPER.z);
+        else
+            return MoveTo(bg->GetMapId(), WS_FLAG_ALLIANCE_ROOF_JUMP_LOWER.x, WS_FLAG_ALLIANCE_ROOF_JUMP_LOWER.y, WS_FLAG_ALLIANCE_ROOF_JUMP_LOWER.z, false, false, true);
+    }
+
+    if (atHordeSecondFloorJump && (!inCombat || (pos.z < 354.f && pos.x > 933.f)))
+    {
+        // not at jump point
+        if (bot->GetPositionY() > 1452.f)
+            return MoveTo(bg->GetMapId(), WS_FLAG_HORDE_FLOOR_JUMP_UPPER.x, WS_FLAG_HORDE_FLOOR_JUMP_UPPER.y, WS_FLAG_HORDE_FLOOR_JUMP_UPPER.z);
+        else
+            return MoveTo(bg->GetMapId(), WS_FLAG_HORDE_FLOOR_JUMP_LOWER.x, WS_FLAG_HORDE_FLOOR_JUMP_LOWER.y, WS_FLAG_HORDE_FLOOR_JUMP_LOWER.z, false, false, true);
+    }
+
+    if (atAllianceSecondFloorJump && (!inCombat || (pos.z < 361.f && pos.x < 1421.f)))
+    {
+        // not at jump point
+        if (bot->GetPositionY() < 1468.f)
+            return MoveTo(bg->GetMapId(), WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.x, WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.y, WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.z);
+        else
+            return MoveTo(bg->GetMapId(), WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.x, WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.y, WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.z, false, false, true);
+    }
+    return false;
+}
+
 // eots jump logic
 bool BGTactics::eotsJump()
 {
@@ -3085,7 +3139,7 @@ bool BGTactics::selectObjective(bool reset)
     {
     case BATTLEGROUND_AV:
     {
-        bool strifeTime = bg->GetStartTime() < (uint32)(10 * MINUTE * IN_MILLISECONDS);
+        bool strifeTime = bg->GetStartTime() < (uint32)(30 * MINUTE * IN_MILLISECONDS);
         if (bot->GetTeam() == HORDE)
         {
             bool endBoss = false;

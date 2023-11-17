@@ -1932,7 +1932,7 @@ bool RandomPlayerbotMgr::ProcessBot(Player* player)
         uint32 teleport = GetEventValue(bot, "teleport");
         if (!teleport && players.size())
         {
-            sLog.outBasic("Bot #%d %s:%d <%s>: sent to grind", bot, player->GetTeam() == ALLIANCE ? "A" : "H", player->GetLevel(), player->GetName());
+            //sLog.outBasic("Bot #%d %s:%d <%s>: sent to grind", bot, player->GetTeam() == ALLIANCE ? "A" : "H", player->GetLevel(), player->GetName());
             RandomTeleportForLevel(player, true);
             ScheduleTeleport(bot);
             return true;
@@ -1985,7 +1985,7 @@ void RandomPlayerbotMgr::RandomTeleport(Player* bot, vector<WorldLocation> &locs
 
     if (locs.empty())
     {
-        sLog.outError("Cannot teleport bot %s - no locations available", bot->GetName());
+        //sLog.outError("Cannot teleport bot %s - no locations available", bot->GetName());
         return;
     }
 
@@ -3454,14 +3454,14 @@ void RandomPlayerbotMgr::ChangeStrategy(Player* player)
 
     if (urand(0, 100) > 100 * sPlayerbotAIConfig.randomBotRpgChance) // select grind / pvp
     {
-        sLog.outBasic("Bot #%d %s:%d <%s>: sent to grind spot", bot, player->GetTeam() == ALLIANCE ? "A" : "H", player->GetLevel(), player->GetName());
+        //sLog.outBasic("Bot #%d %s:%d <%s>: sent to grind spot", bot, player->GetTeam() == ALLIANCE ? "A" : "H", player->GetLevel(), player->GetName());
         // teleport in different places only if players are online
         RandomTeleportForLevel(player, players.size());
         ScheduleTeleport(bot);
     }
     else
     {
-		sLog.outBasic("Bot #%d %s:%d <%s>: sent to inn", bot, player->GetTeam() == ALLIANCE ? "A" : "H", player->GetLevel(), player->GetName());
+		//sLog.outBasic("Bot #%d %s:%d <%s>: sent to inn", bot, player->GetTeam() == ALLIANCE ? "A" : "H", player->GetLevel(), player->GetName());
         RandomTeleportForRpg(player, players.size());
         ScheduleTeleport(bot);
     }
@@ -3473,13 +3473,13 @@ void RandomPlayerbotMgr::ChangeStrategyOnce(Player* player)
 
     if (urand(0, 100) > 100 * sPlayerbotAIConfig.randomBotRpgChance && players.size()) // select grind / pvp
     {
-        sLog.outBasic("Bot #%d %s:%d <%s>: sent to grind spot", bot, player->GetTeam() == ALLIANCE ? "A" : "H", player->GetLevel(), player->GetName());
+       // sLog.outBasic("Bot #%d %s:%d <%s>: sent to grind spot", bot, player->GetTeam() == ALLIANCE ? "A" : "H", player->GetLevel(), player->GetName());
         // teleport in different places only if players are online
         RandomTeleportForLevel(player, true);
     }
     else
     {
-        sLog.outBasic("Bot #%d %s:%d <%s>: sent to inn", bot, player->GetTeam() == ALLIANCE ? "A" : "H", player->GetLevel(), player->GetName());
+        //sLog.outBasic("Bot #%d %s:%d <%s>: sent to inn", bot, player->GetTeam() == ALLIANCE ? "A" : "H", player->GetLevel(), player->GetName());
         RandomTeleportForRpg(player, players.size());
     }
 }

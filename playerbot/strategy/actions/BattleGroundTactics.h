@@ -56,6 +56,7 @@ private:
     bool resetObjective();
     bool wsgPaths();
     bool wsgRoofJump();
+    bool ABSwimPath();
     bool eotsJump();
     bool atFlag(std::vector<BattleBotPath*> const& vPaths, std::vector<uint32> const& vFlagIds);
     bool flagTaken();
