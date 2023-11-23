@@ -434,6 +434,7 @@ bool PlayerbotAIConfig::Initialize()
     minEnchantingBotLevel = config.GetIntDefault("AiPlayerbot.minEnchantingBotLevel", 60);
     randombotStartingLevel = config.GetIntDefault("AiPlayerbot.randombotStartingLevel", 5);
     gearscorecheck = config.GetBoolDefault("AiPlayerbot.GearScoreCheck", false);
+    levelCheck = config.GetIntDefault("AiPlayerbot.LevelCheck", 30);
 	randomBotPreQuests = config.GetBoolDefault("AiPlayerbot.PreQuests", true);
     randomBotSayWithoutMaster = config.GetBoolDefault("AiPlayerbot.RandomBotSayWithoutMaster", false);
     randomBotInvitePlayer = config.GetBoolDefault("AiPlayerbot.RandomBotInvitePlayer", true);
