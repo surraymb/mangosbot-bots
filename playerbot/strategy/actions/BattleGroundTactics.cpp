@@ -89,11 +89,13 @@ std::vector<uint32> const vFlagsAB = { BG_AB_BANNER_ALLIANCE , BG_AB_BANNER_CONT
                                        BG_AB_BANNER_STABLE, BG_AB_BANNER_BLACKSMITH, BG_AB_BANNER_FARM, BG_AB_BANNER_LUMBER_MILL,
                                        BG_AB_BANNER_MINE };
 
+static std::map<uint32, GameObject*> botSelectedObjectives; // Map bot's GUID to its selected GameObject
+static std::map<uint32, uint32> botObjectiveSelectionTime; // Map bot's GUID to the time when it selected the objective
+static std::map<uint32, uint32> botLastObjectiveCheckTime; // Tracks the last time each bot checked its objective
+
 std::vector<uint32> const vFlagsWS = { GO_WS_SILVERWING_FLAG, GO_WS_WARSONG_FLAG, GO_WS_SILVERWING_FLAG_DROP, GO_WS_WARSONG_FLAG_DROP };
 
-std::map<uint32, GameObject*> botSelectedObjectives; // Map bot's GUID to its selected GameObject
-std::map<uint32, uint32> botObjectiveSelectionTime; // Map bot's GUID to the time when it selected the objective
-std::map<uint32, uint32> botLastObjectiveCheckTime; // Tracks the last time each bot checked its objective
+
 
 const bool firstObjective = false;
 
@@ -571,6 +573,34 @@ BattleBotPath vPath_AB_Blacksmith_to_Mill_WaterPath =
     { 869.28f, 1188.27f, 9.5954f, nullptr },
     { 856.28f, 1150.27f, 11.5288f, nullptr },
 };
+
+// Blacksmith GY to Lumber Road
+BattleBotPath vPath_AB_BlacksmithGY_to_Lumber_Road =
+{
+    { 11011.f, 956.f, -40.9007f, nullptr },
+    { 968.77f, 966.13f, -43.7105f, nullptr },
+    { 905.34f, 996.76f, -61.5442f, nullptr },
+    { 859.03f, 985.47f, -61.546f, nullptr },
+    { 841.74f, 985.23f, -58.8920f, nullptr },
+    { 796.25f, 1009.93f, -44.3286f, nullptr },
+    { 781.29f, 1034.49f, -32.887f, nullptr },
+    { 793.17f, 1107.21f, 5.5663f, nullptr },
+    { 848.98f, 1155.9f, 11.3453f, nullptr },
+};
+// Blacksmith GY to Mine Road
+BattleBotPath vPath_AB_BlacksmithGY_to_Mine_Road =
+{
+    { 1015.f, 960.f, -42.9662f, nullptr },
+    { 1081.77f, 1000.13f, -57.8201f, nullptr },
+    { 1149.34f, 999.76f, -63.82f, nullptr },
+    { 1159.93f, 1003.69f, -63.8378f, nullptr },
+    { 1198.03f, 1064.09f, -65.8385f, nullptr },
+    { 1218.58f, 1016.96f, -76.9848f, nullptr },
+    { 1192.83f, 956.25f, -93.6974f, nullptr },
+    { 1162.93f, 908.92f, -108.6703f, nullptr },
+    { 1144.94f, 860.09f, -111.2100f, nullptr },
+};
+
 // Alliance Base to Gold Mine
 BattleBotPath vPath_AB_AllianceBase_to_GoldMine =
 {
@@ -2180,11 +2210,12 @@ std::vector<BattleBotPath*> const vPaths_AB =
     &vPath_AB_Blacksmith_to_LumberMill,
     &vPath_AB_Blacksmith_to_GoldMine,
     &vPath_AB_Farm_to_Stable,
+    &vPath_AB_BlacksmithGY_to_Lumber_Road,
+    &vPath_AB_BlacksmithGY_to_Mine_Road,
     //tried adding these but the bots don't go in the water, look into how to make this happen
     //&vPath_AB_BlacksmithGY_to_MineRoad,
     //&vPath_AB_Blacksmith_to_Mill_WaterPath,
     //&vPath_AB_Blacksmith_to_Stables_WaterPath,
-
 };
 
 std::vector<BattleBotPath*> const vPaths_AV =
@@ -2415,7 +2446,30 @@ bool BGTactics::wsgPaths()
     if (!bg)
         return false;
 
+
     ai::PositionEntry pos = context->GetValue<ai::PositionMap&>("position")->Get()["bg objective"];
+
+    // try maybe skip this custom logic if flag carrier
+    /*
+    if (bot->HasAura(BG_WS_SPELL_SILVERWING_FLAG))
+    {
+        //return false;
+        MoveTo(bg->GetMapId(), WS_FLAG_POS_HORDE.x, WS_FLAG_POS_HORDE.y, WS_FLAG_POS_HORDE.z);
+        ostringstream out;
+        out << "DEBUG Skipping wsgpaths, moving straight to horde flag spot";
+        bot->Say(out.str(), LANG_UNIVERSAL);
+        return true;
+    }
+    else if (bot->HasAura(BG_WS_SPELL_WARSONG_FLAG))
+    {
+        MoveTo(bg->GetMapId(), WS_FLAG_POS_ALLIANCE.x, WS_FLAG_POS_ALLIANCE.y, WS_FLAG_POS_ALLIANCE.z);
+        ostringstream out;
+        out << "DEBUG Skipping wsgpaths, moving straight to alliance flag spot";
+        bot->Say(out.str(), LANG_UNIVERSAL);
+        return true;
+    }
+    */
+
 
     uint32 Preference = context->GetValue<uint32>("bg role")->Get();
 
@@ -2707,6 +2761,10 @@ bool BGTactics::wsgRoofJump()
     bool atAllianceRoof = bot->GetPositionX() > 1465.f && bot->GetPositionZ() > 370.f;
     bool inCombat = bot->IsInCombat();
 
+    //ostringstream out;
+    //out << "Trying wsgRoofJump()";
+    //bot->Say(out.str(), LANG_UNIVERSAL);
+
     if (atHordeRoof && (!inCombat || (pos.z < 365.f && pos.x > 987.f)))
     {
         // not at jump point
@@ -2751,51 +2809,28 @@ bool BGTactics::ABSwimPath()
     if (!bg)
         return false;
 
-    ai::PositionEntry pos = context->GetValue<ai::PositionMap&>("position")->Get()["bg objective"]; // does this work in AB?
+    //ai::PositionEntry pos = context->GetValue<ai::PositionMap&>("position")->Get()["bg objective"]; // does this work in AB?
 
     uint32 Preference = context->GetValue<uint32>("bg role")->Get();
 
-    bool atHordeSecondFloorJump = bot->GetPositionX() < 933.f && bot->GetPositionY() > 1450.f && bot->GetPositionZ() > 354.f;
-    bool atAllianceSecondFloorJump = bot->GetPositionX() > 1522.f && bot->GetPositionY() < 1468.f && bot->GetPositionZ() > 361.f;
-    bool atHordeRoof = bot->GetPositionX() < 987.f && bot->GetPositionY() > 1417.f && bot->GetPositionZ() > 364.f;
-    bool atAllianceRoof = bot->GetPositionX() > 1465.f && bot->GetPositionZ() > 370.f;
+    // Target coordinates
+    const float targetX = 1018.f;
+    const float targetY = 958.f;
+    const float targetZ = -42.f;
+
+    // Check if within 10 units
+    bool atBlacksmithGY = std::abs(bot->GetPositionX() - targetX) <= 10.0f &&
+        std::abs(bot->GetPositionY() - targetY) <= 10.0f &&
+        std::abs(bot->GetPositionZ() - targetZ) <= 10.0f;
+
     bool inCombat = bot->IsInCombat();
+    bool isDead = bot->IsDead();
 
-    if (atHordeRoof && (!inCombat || (pos.z < 365.f && pos.x > 987.f)))
+    if (atBlacksmithGY && !inCombat && !isDead)
     {
-        // not at jump point
-        if (bot->GetPositionX() > 933.f || bot->GetPositionY() > 1450.f)
-            return MoveTo(bg->GetMapId(), WS_FLAG_HORDE_ROOF_JUMP_UPPER.x, WS_FLAG_HORDE_ROOF_JUMP_UPPER.y, WS_FLAG_HORDE_ROOF_JUMP_UPPER.z);
-        else
-            return MoveTo(bg->GetMapId(), WS_FLAG_HORDE_ROOF_JUMP_LOWER.x, WS_FLAG_HORDE_ROOF_JUMP_LOWER.y, WS_FLAG_HORDE_ROOF_JUMP_LOWER.z, false, false, true);
+            return MoveTo(bg->GetMapId(), 1048.f, 895.f, -64.9502f, false, false, true);
     }
 
-    if (atAllianceRoof && (!inCombat || (pos.z < 372.f && pos.x < 1465.f)))
-    {
-        // not at jump point
-        if (bot->GetPositionX() < 1521.f || bot->GetPositionY() > 1467.f)
-            return MoveTo(bg->GetMapId(), WS_FLAG_ALLIANCE_ROOF_JUMP_UPPER.x, WS_FLAG_ALLIANCE_ROOF_JUMP_UPPER.y, WS_FLAG_ALLIANCE_ROOF_JUMP_UPPER.z);
-        else
-            return MoveTo(bg->GetMapId(), WS_FLAG_ALLIANCE_ROOF_JUMP_LOWER.x, WS_FLAG_ALLIANCE_ROOF_JUMP_LOWER.y, WS_FLAG_ALLIANCE_ROOF_JUMP_LOWER.z, false, false, true);
-    }
-
-    if (atHordeSecondFloorJump && (!inCombat || (pos.z < 354.f && pos.x > 933.f)))
-    {
-        // not at jump point
-        if (bot->GetPositionY() > 1452.f)
-            return MoveTo(bg->GetMapId(), WS_FLAG_HORDE_FLOOR_JUMP_UPPER.x, WS_FLAG_HORDE_FLOOR_JUMP_UPPER.y, WS_FLAG_HORDE_FLOOR_JUMP_UPPER.z);
-        else
-            return MoveTo(bg->GetMapId(), WS_FLAG_HORDE_FLOOR_JUMP_LOWER.x, WS_FLAG_HORDE_FLOOR_JUMP_LOWER.y, WS_FLAG_HORDE_FLOOR_JUMP_LOWER.z, false, false, true);
-    }
-
-    if (atAllianceSecondFloorJump && (!inCombat || (pos.z < 361.f && pos.x < 1421.f)))
-    {
-        // not at jump point
-        if (bot->GetPositionY() < 1468.f)
-            return MoveTo(bg->GetMapId(), WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.x, WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.y, WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.z);
-        else
-            return MoveTo(bg->GetMapId(), WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.x, WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.y, WS_FLAG_ALLIANCE_FLOOR_JUMP_UPPER.z, false, false, true);
-    }
     return false;
 }
 
@@ -2978,7 +3013,7 @@ bool BGTactics::Execute(Event& event)
 #else
         if (bot->HasAura(BG_WS_SPELL_WARSONG_FLAG) || bot->HasAura(BG_WS_SPELL_SILVERWING_FLAG) || bot->HasAura(EY_SPELL_NETHERSTORM_FLAG))
 #endif
-            return false;
+            return false; //could try reset objective here instead for flag carrier?
 
         if (startNewPathBegin(*vPaths))
             return true;
@@ -3124,7 +3159,12 @@ bool BGTactics::selectObjective(bool reset)
     ai::PositionMap& posMap = context->GetValue<ai::PositionMap&>("position")->Get();
     ai::PositionEntry pos = context->GetValue<ai::PositionMap&>("position")->Get()["bg objective"];
     if (pos.isSet() && !reset)
-        return false;
+    {
+        if (!(bot->HasAura(BG_WS_SPELL_WARSONG_FLAG) || bot->HasAura(BG_WS_SPELL_SILVERWING_FLAG))) // maybe bots cannot move from flag spot if enemy has the flag because of this
+        {
+            return false;
+        }
+    }
 
     WorldObject* BgObjective = nullptr;
     int BgOnSameObjective = 0;
@@ -3435,7 +3475,7 @@ bool BGTactics::selectObjective(bool reset)
         }
         break;
     }
-    case BATTLEGROUND_WS:
+    case BATTLEGROUND_WS: 
     {
         // test free roam
         // if (!flagTaken() && !teamFlagTaken())
@@ -3443,10 +3483,58 @@ bool BGTactics::selectObjective(bool reset)
 
         if (bot->HasAura(BG_WS_SPELL_WARSONG_FLAG) || bot->HasAura(BG_WS_SPELL_SILVERWING_FLAG))
         {
-            ostringstream out;
-            out << "DEBUG I have the flag!";
-            bot->Say(out.str(), LANG_UNIVERSAL);
+            //ostringstream out;
+            //out << "DEBUG I have the flag!";
+            //bot->Say(out.str(), LANG_UNIVERSAL);
 
+            Unit* enemyFC = AI_VALUE(Unit*, "enemy flag carrier");
+
+            if (bot->GetTeam() == ALLIANCE)
+            {
+                
+                if (enemyFC) // if enemy has our flag, hide
+                {
+                    //out << "DEBUG Horde has our flag, so I should hide. Moving to TEST hiding spot behind our GY.";
+                    //bot->Say(out.str(), LANG_UNIVERSAL);
+
+                    //pos.Set(hidePos.x, hidePos.y, hidePos.z, bot->GetMapId());
+
+                    // forget hiding for now, just sit on the flag spot.
+                    pos.Set(WS_FLAG_POS_ALLIANCE.x, WS_FLAG_POS_ALLIANCE.y, WS_FLAG_POS_ALLIANCE.z, bot->GetMapId());
+
+                    //pos.Set(WS_FLAG_HIDE_ALLIANCE_TEST.x, WS_FLAG_HIDE_ALLIANCE_TEST.y, WS_FLAG_HIDE_ALLIANCE_TEST.z, bot->GetMapId());
+                }
+                else
+                {
+                    pos.Set(WS_FLAG_POS_ALLIANCE.x, WS_FLAG_POS_ALLIANCE.y, WS_FLAG_POS_ALLIANCE.z, bot->GetMapId());
+                    //out << "DEBUG I have the Horde flag and our flag is at home - set target position to Alliance flag!";
+                    //bot->Say(out.str(), LANG_UNIVERSAL);
+                }
+            }
+            else
+            {
+                if (enemyFC) // if enemy has our flag, hide
+                {
+                    //out << "DEBUG Alliance has our flag, so I should hide. Moving to TEST hiding spot behind our GY.";
+                    //bot->Say(out.str(), LANG_UNIVERSAL);
+
+                    //Position hidePos = WS_FLAG_HIDE_HORDE[urand(0, 4)];
+                    //pos.Set(hidePos.x, hidePos.y, hidePos.z, bot->GetMapId());
+
+                    // forget hiding for now, just sit on the flag spot.
+                    pos.Set(WS_FLAG_POS_HORDE.x, WS_FLAG_POS_HORDE.y, WS_FLAG_POS_HORDE.z, bot->GetMapId());
+
+                    //pos.Set(WS_FLAG_HIDE_HORDE_TEST.x, WS_FLAG_HIDE_HORDE_TEST.y, WS_FLAG_HIDE_HORDE_TEST.z, bot->GetMapId());
+                }
+                else
+                {
+                    pos.Set(WS_FLAG_POS_HORDE.x, WS_FLAG_POS_HORDE.y, WS_FLAG_POS_HORDE.z, bot->GetMapId());
+                    //out << "DEBUG I have the Alliance flag and our flag is at home - set target position to Horde flag!";
+                    //bot->Say(out.str(), LANG_UNIVERSAL);
+                }
+            }
+
+            /* original code preserved for reference
             if (bot->GetTeam() == ALLIANCE)
             {
                 if (teamFlagTaken())
@@ -3475,6 +3563,8 @@ bool BGTactics::selectObjective(bool reset)
                 else
                     pos.Set(WS_FLAG_POS_HORDE.x, WS_FLAG_POS_HORDE.y, WS_FLAG_POS_HORDE.z, bot->GetMapId());
             }
+            */
+
 
             //ostringstream out;
             //if (teamFlagTaken())
@@ -3491,12 +3581,17 @@ bool BGTactics::selectObjective(bool reset)
             //ostringstream out;
             //out << "Role: " << role;
             //bot->Say(out.str(), LANG_UNIVERSAL);
+            Unit* teamFC = AI_VALUE(Unit*, "team flag carrier");
+            Unit* enemyFC = AI_VALUE(Unit*, "enemy flag carrier");
 
             if (supporter)
             {
-                Unit* teamFC = AI_VALUE(Unit*, "team flag carrier");
                 if (teamFC)
                 {
+                    if ((enemyFC && teamFC) && (rand() % 2 == 0)) // if both flags are in play, focus on the enemy flag carrier even if supporter, at 50% chance
+                    {
+                        pos.Set(enemyFC->GetPositionX(), enemyFC->GetPositionY(), enemyFC->GetPositionZ(), bot->GetMapId());
+                    }
                     //ostringstream out;
                     //out << "Protecting " << (bot->GetTeam() == ALLIANCE ? "Alliance FC" : "Horde FC");
                     //bot->Say(out.str(), LANG_UNIVERSAL);
@@ -3507,7 +3602,7 @@ bool BGTactics::selectObjective(bool reset)
                 else
                 {
                     Unit* enemyFC = AI_VALUE(Unit*, "enemy flag carrier");
-                    if (enemyFC)
+                    if (enemyFC) // go for flag carrier
                     {
                         pos.Set(enemyFC->GetPositionX(), enemyFC->GetPositionY(), enemyFC->GetPositionZ(), bot->GetMapId());
 
@@ -3530,8 +3625,11 @@ bool BGTactics::selectObjective(bool reset)
             }
             else
             {
-                Unit* enemyFC = AI_VALUE(Unit*, "enemy flag carrier");
-                if (enemyFC)
+                if (enemyFC && teamFC) // if both flags are in play, focus on the enemy flag carrier
+                {
+                    pos.Set(enemyFC->GetPositionX(), enemyFC->GetPositionY(), enemyFC->GetPositionZ(), bot->GetMapId());
+                }
+                else if (enemyFC && (rand() % 2 == 0)) // 50% chance to go for flag carrier
                 {
                     pos.Set(enemyFC->GetPositionX(), enemyFC->GetPositionY(), enemyFC->GetPositionZ(), bot->GetMapId());
 
@@ -3541,7 +3639,7 @@ bool BGTactics::selectObjective(bool reset)
                 }
                 else
                 {
-                    if (role > 9)  // test patrol
+                    if (role > 9)  // test patrol. role is 0-9 so over 9 is inactive for now
                     {
                         float rx, ry, rz;
                         bot->GetRandomPoint(1227.446f, 1476.235f, 307.484f, 150.0f, rx, ry, rz);
@@ -3574,9 +3672,143 @@ bool BGTactics::selectObjective(bool reset)
     
     case BATTLEGROUND_AB:
     {
+        //for reference:
+        //static std::map<uint32, GameObject*> botSelectedObjectives; // Map bot's GUID to its selected GameObject
+        //static std::map<uint32, uint32> botObjectiveSelectionTime; // Map bot's GUID to the time when it selected the objective
+        //static std::map<uint32, uint32> botLastObjectiveCheckTime; // Tracks the last time each bot checked its objective
+         
         // Common setup for both HORDE and ALLIANCE
         uint32 role = context->GetValue<uint32>("bg role")->Get();
         bool defender = role < 5;
+        uint32 botGUID = bot->GetGUIDLow(); // Getting the bot's unique ID
+
+        bool isDead = bot->IsDead();
+
+
+        //Group* group = bot->GetGroup();
+        //if (group)
+        //{
+        //    int botsOnBS = 0;
+        //    int botsOnFarm = 0;
+        //    int botsOnLM = 0;
+        //    int botsOnStables = 0;
+        //    int botsOnGM = 0;
+
+        //    Group::MemberSlotList const& groupMembers = group->GetMemberSlots();
+        //    for (Group::member_citerator itr = groupMembers.begin(); itr != groupMembers.end(); ++itr)
+        //    {
+        //        //Exclude player from the tally because the player is the one entering the dungeon
+        //        //if (itr->guid == bot->GetGUIDLow())
+        //        //{
+        //        //    continue;
+        //        //}
+
+        //        // count bots 
+        //        if (botSelectedObjectives[itr->guid])
+        //        {
+        //            ai::PositionEntry itrObjPos = context->GetValue<ai::PositionMap&>("position")->Get()["bg objective"];
+        //            if (itrObjPos.isSet())
+        //            {
+        //                float positionX = itrObjPos.x;
+        //                std::string posX = std::to_string(positionX);
+
+        //                float positionY = itrObjPos.y;
+        //                std::string posY = std::to_string(positionY);
+
+        //                float positionZ = itrObjPos.z;
+        //                std::string posZ = std::to_string(positionZ);
+
+        //                std::string botGuidString = std::to_string(itr->guid);
+        //                std::string botName = itr->name;
+
+        //                string ObjVerbose = "";
+
+        //                if (std::abs(positionX - 977.016) <= 10.0)
+        //                {
+        //                    ObjVerbose = "Blacksmith";
+        //                    botsOnBS++;
+        //                }
+        //                else if (std::abs(positionX - 806.182) <= 10.0)
+        //                {
+        //                    ObjVerbose = "Farm";
+        //                    botsOnFarm++;
+        //                }
+        //                else if (std::abs(positionX - 856.142) <= 10.0)
+        //                {
+        //                    ObjVerbose = "Lumber Mill";
+        //                    botsOnLM++;
+        //                }
+        //                else if (std::abs(positionX - 1166.79) <= 10.0)
+        //                {
+        //                    ObjVerbose = "Stables";
+        //                    botsOnStables++;
+        //                }
+        //                else if (std::abs(positionX - 1146.92) <= 10.0)
+        //                {
+        //                    ObjVerbose = "Gold Mine";
+        //                    botsOnGM++;
+        //                }
+        //            }
+
+        //            //sLog.outBasic("Bot #%d %s:%d <%s>: Get Front Objectives", bot->GetGUIDLow(), bot->GetTeam() == ALLIANCE ? "A" : "H", bot->GetName());
+
+
+        //            //std::string logMessage = "Name: " + botName + " Objective: " + ObjVerbose;
+        //            //sLog.outBasic(logMessage.c_str());
+        //        }
+
+        //    }
+
+        //    if (bot->GetTeam() == ALLIANCE)
+        //    {
+        //        std::string msgBase = "ALLIANCE OVERVIEW:";
+        //        sLog.outBasic(msgBase.c_str());
+
+        //        std::string msg1 = "Blacksmith: " + std::to_string(botsOnBS);
+        //        sLog.outBasic(msg1.c_str());
+
+        //        std::string msg2 = "Farm: " + std::to_string(botsOnFarm);
+        //        sLog.outBasic(msg2.c_str());
+
+        //        std::string msg3 = "LumberMill: " + std::to_string(botsOnLM);
+        //        sLog.outBasic(msg3.c_str());
+
+        //        std::string msg4 = "Stables: " + std::to_string(botsOnStables);
+        //        sLog.outBasic(msg4.c_str());
+
+        //        std::string msg5 = "GoldMine: " + std::to_string(botsOnGM);
+        //        sLog.outBasic(msg5.c_str());
+        //    }
+        //    else if (bot->GetTeam() == HORDE)
+        //    {
+        //        std::string msgBase = "HORDE OVERVIEW:";
+        //        sLog.outBasic(msgBase.c_str());
+
+        //        std::string msg1 = "Blacksmith: " + std::to_string(botsOnBS);
+        //        sLog.outBasic(msg1.c_str());
+
+        //        std::string msg2 = "Farm: " + std::to_string(botsOnFarm);
+        //        sLog.outBasic(msg2.c_str());
+
+        //        std::string msg3 = "LumberMill: " + std::to_string(botsOnLM);
+        //        sLog.outBasic(msg3.c_str());
+
+        //        std::string msg4 = "Stables: " + std::to_string(botsOnStables);
+        //        sLog.outBasic(msg4.c_str());
+
+        //        std::string msg5 = "GoldMine: " + std::to_string(botsOnGM);
+        //        sLog.outBasic(msg5.c_str());
+        //    }
+        //}
+
+
+
+        if (isDead && (botSelectedObjectives[botGUID] != nullptr))
+        {
+            bot->Say("I'm dead, guess I'll reset my objective.", LANG_UNIVERSAL);
+            botSelectedObjectives[botGUID] = nullptr; // Reset objective if we die... maybe more lucky elsewhere -- wait I don't think this is executed on dead bots so it's never triggered
+            botObjectiveSelectionTime[botGUID] = 0;
+        }
 
         std::set<GameObject*> uniqueObjectives;
 
@@ -3602,7 +3834,7 @@ bool BGTactics::selectObjective(bool reset)
 
         GameObject* BgObjective = nullptr;
 
-        uint32 botGUID = bot->GetGUIDLow(); // Getting the bot's unique ID
+
 
         // Check if the bot has previously selected an objective and if it's still valid
         if (botSelectedObjectives.find(botGUID) != botSelectedObjectives.end() &&
@@ -3618,7 +3850,7 @@ bool BGTactics::selectObjective(bool reset)
             {
                 if (elapsedTime > 50000)
                 {
-                    uint32 extraTime = (elapsedTime - 50000) / 1000; // Calculate seconds past the 40 seconds mark
+                    uint32 extraTime = (elapsedTime - 50000) / 1000; // Calculate seconds past the 50 seconds mark
                     probabilityToKeepSameObjective -= (0.01f * extraTime); // Decrease by 1% for each second past 40 seconds
                 }
 
@@ -3634,7 +3866,7 @@ bool BGTactics::selectObjective(bool reset)
             {
                 if (elapsedTime > 20000)
                 {
-                    uint32 extraTime = (elapsedTime - 20000) / 1000; // Calculate seconds past the 40 seconds mark
+                    uint32 extraTime = (elapsedTime - 20000) / 1000; // Calculate seconds past the 20 seconds mark
                     probabilityToKeepSameObjective -= (0.01f * extraTime); // Decrease by 1% for each second past 40 seconds
                 }
 
@@ -3683,6 +3915,156 @@ bool BGTactics::selectObjective(bool reset)
         }
         break;
     }
+
+    /* This works pretty well, Nov. 19th 2023 version - pre new logic
+    case BATTLEGROUND_AB:
+    {
+        // Common setup for both HORDE and ALLIANCE
+        uint32 role = context->GetValue<uint32>("bg role")->Get();
+        bool defender = role < 5;
+        uint32 botGUID = bot->GetGUIDLow(); // Getting the bot's unique ID
+
+        bool isDead = bot->IsDead();
+
+        Group* group = bot->GetGroup();
+        if (group)
+        {
+            Group::MemberSlotList const& groupMembers = group->GetMemberSlots();
+            for (Group::member_citerator itr = groupMembers.begin(); itr != groupMembers.end(); ++itr)
+            {
+                //Exclude player from the tally because the player is the one entering the dungeon
+                if (itr->guid != bot->GetGUIDLow())
+                {
+                    //Database query to find difficulty for each group member that is currently in an instance
+                    QueryResult* result = CharacterDatabase.PQuery("SELECT `GUID`, `Difficulty`, `GroupSize` FROM `custom_solocraft_character_stats` WHERE GUID = %u", itr->guid);
+                    if (result)
+                    {
+                        //Test for debuffs already give to other members - They cannot be used to determine the total offset because negative numbers will skew the total difficulty offset
+                        if ((*result)[1].GetFloat() > 0)
+                        {
+                            //GroupDifficulty = GroupDifficulty + (*result)[1].GetFloat();
+                            //sLog->outError("%u : Group member GUID in instance: %u", player->GetGUID(), itr->guid);
+                        }
+                    }
+                }
+            }
+        }
+
+
+
+        if(isDead && (botSelectedObjectives[botGUID] != nullptr))
+        {
+            bot->Say("I'm dead, guess I'll reset my objective.", LANG_UNIVERSAL);
+            botSelectedObjectives[botGUID] = nullptr; // Reset objective if we die... maybe more lucky elsewhere
+            botObjectiveSelectionTime[botGUID] = 0;
+        }
+
+        std::set<GameObject*> uniqueObjectives;
+
+        for (const auto& objective : AB_AttackObjectives)
+        {
+            bool isActiveNeutral = bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_NEUTRAL);
+
+            // isOccupied and isContested remain unchanged:
+            bool isOccupied = (bot->GetTeam() == HORDE) ? bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_ALLY_OCCUPIED) : bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_HORDE_OCCUPIED);
+            bool isContested = (bot->GetTeam() == HORDE) ? bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_ALLY_CONTESTED) : bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_HORDE_CONTESTED);
+            bool isFriendly = (bot->GetTeam() == HORDE) ? bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_HORDE_OCCUPIED) || bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_HORDE_CONTESTED) : bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_ALLY_OCCUPIED) || bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_ALLY_CONTESTED);
+
+            // If we're a defender, target friendly, neutral or under attack objectives (maybe remove the under attack ones?). if we're an attacker, target enemy, neutral or under attack objectives. 
+            if ((defender && (isActiveNeutral || isFriendly || isContested)) || (!defender && (isActiveNeutral || isContested || isOccupied)))
+            {
+                if (GameObject* pGO = bot->GetMap()->GetGameObject(bg->GetSingleGameObjectGuid(objective.first, BG_AB_NODE_STATUS_NEUTRAL)))
+                {
+                    // Add it to the list if it's valid.
+                    uniqueObjectives.insert(pGO);
+                }
+            }
+        }
+
+        GameObject* BgObjective = nullptr;
+
+
+
+        // Check if the bot has previously selected an objective and if it's still valid
+        if (botSelectedObjectives.find(botGUID) != botSelectedObjectives.end() &&
+            uniqueObjectives.find(botSelectedObjectives[botGUID]) != uniqueObjectives.end())
+        {
+            uint32 elapsedTime = WorldTimer::getMSTime() - botObjectiveSelectionTime[botGUID];
+            float probabilityToKeepSameObjective = 1.0f; // Default 100%
+
+            GameObject* lastObj = botSelectedObjectives[botGUID];
+            float const lastObjDist = sqrt(bot->GetDistance(lastObj));
+
+            if (lastObjDist < 50.00f)
+            {
+                if (elapsedTime > 50000)
+                {
+                    uint32 extraTime = (elapsedTime - 50000) / 1000; // Calculate seconds past the 50 seconds mark
+                    probabilityToKeepSameObjective -= (0.01f * extraTime); // Decrease by 1% for each second past 40 seconds
+                }
+
+                float randomValue = float(rand() % 101) / 100.0f; // Generate a random float between 0.0 to 1.0
+
+                if (randomValue <= probabilityToKeepSameObjective)
+                {
+                    BgObjective = botSelectedObjectives[botGUID];
+                }
+                else uniqueObjectives.erase(lastObj);
+            }
+            else
+            {
+                if (elapsedTime > 20000)
+                {
+                    uint32 extraTime = (elapsedTime - 20000) / 1000; // Calculate seconds past the 20 seconds mark
+                    probabilityToKeepSameObjective -= (0.01f * extraTime); // Decrease by 1% for each second past 40 seconds
+                }
+
+                float randomValue = float(rand() % 101) / 100.0f; // Generate a random float between 0.0 to 1.0
+
+                if (randomValue <= probabilityToKeepSameObjective)
+                {
+                    BgObjective = botSelectedObjectives[botGUID];
+                }
+                else uniqueObjectives.erase(lastObj);
+            }
+        }
+
+        // If BgObjective is still nullptr at this point, select a new one
+        if (!BgObjective && !uniqueObjectives.empty())
+        {
+            // Convert the set to a vector to use with 'urand' function
+            std::vector<GameObject*> objectives(uniqueObjectives.begin(), uniqueObjectives.end());
+
+            // Select a random objective from your unique objectives
+            BgObjective = objectives[urand(0, objectives.size() - 1)];
+            botSelectedObjectives[botGUID] = BgObjective; // Remember this objective for the bot
+            botObjectiveSelectionTime[botGUID] = WorldTimer::getMSTime(); // Remember the time of selection
+        }
+
+        if (BgObjective)
+        {
+            pos.Set(BgObjective->GetPositionX(), BgObjective->GetPositionY(), BgObjective->GetPositionZ(), BgObjective->GetMapId());
+            posMap["bg objective"] = pos;
+            string ObjVerbose = "";
+
+            if (std::abs(pos.x - 977.016) <= 10.0) ObjVerbose = "Blacksmith";
+            else if (std::abs(pos.x - 806.182) <= 10.0) ObjVerbose = "Farm";
+            else if (std::abs(pos.x - 856.142) <= 10.0) ObjVerbose = "Lumber Mill";
+            else if (std::abs(pos.x - 1166.79) <= 10.0) ObjVerbose = "Stables";
+            else if (std::abs(pos.x - 1146.92) <= 10.0) ObjVerbose = "Gold Mine";
+
+            // DEBUG SAY
+            //ostringstream out;
+            //if(defender) out << "Defending " + ObjVerbose;
+            //else out << "Attacking " + ObjVerbose;
+            //bot->Say(out.str(), LANG_UNIVERSAL);
+
+
+            return true;
+        }
+        break;
+    }
+    */
 
     /* First try
     case BATTLEGROUND_AB:
@@ -4592,6 +4974,16 @@ bool BGTactics::selectObjectiveWp(std::vector<BattleBotPath*> const& vPaths)
 
     ai::PositionMap& posMap = context->GetValue<ai::PositionMap&>("position")->Get();
     ai::PositionEntry pos = context->GetValue<ai::PositionMap&>("position")->Get()["bg objective"];
+
+    if (!pos.isSet() && bot->HasAura(BG_WS_SPELL_WARSONG_FLAG))
+    {
+        pos.Set(WS_FLAG_POS_ALLIANCE.x, WS_FLAG_POS_ALLIANCE.y, WS_FLAG_POS_ALLIANCE.z, bot->GetMapId());
+    }
+    else if (!pos.isSet() && bot->HasAura(BG_WS_SPELL_SILVERWING_FLAG))
+    {
+        pos.Set(WS_FLAG_POS_HORDE.x, WS_FLAG_POS_HORDE.y, WS_FLAG_POS_HORDE.z, bot->GetMapId());
+    }
+
     if (!pos.isSet())
         return false;
 
@@ -4603,6 +4995,12 @@ bool BGTactics::selectObjectiveWp(std::vector<BattleBotPath*> const& vPaths)
         else
             return wsgPaths();
     }
+
+    //if (bgType == BATTLEGROUND_AB)
+    //{
+    //    if (ABSwimPath())
+    //        return true;
+    //}
 
 #ifndef MANGOSBOT_ZERO
     // Eye of the Storm jump
@@ -4726,10 +5124,10 @@ bool BGTactics::resetObjective()
 
     ai::PositionMap& posMap = context->GetValue<ai::PositionMap&>("position")->Get();
     ai::PositionEntry pos = context->GetValue<ai::PositionMap&>("position")->Get()["bg objective"];
-    // do not switch hiding spots
+    // do not switch hiding spots - disabled this for now since it seems to keep bots from selecting a position if both flags are contested
     if (teamFlagTaken() && (bot->HasAura(BG_WS_SPELL_WARSONG_FLAG) || bot->HasAura(BG_WS_SPELL_SILVERWING_FLAG)))
     {
-        return false;
+        //return false;
 
         /*if (bot->GetTeam() == HORDE)
         {

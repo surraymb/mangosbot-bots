@@ -206,8 +206,16 @@ float EnemyPlayerValue::GetMaxAttackDistance(Player* bot)
         {
             //bool strifeTime = bg->GetStartTime() < (uint32)(20 * MINUTE * IN_MILLISECONDS);
             //return strifeTime ? 40.0f : 10.0f;
-            bool strifeTime = bg->GetStartTime() < (uint32)(20 * MINUTE * IN_MILLISECONDS);
+            bool strifeTime = bg->GetStartTime() < (uint32)(25 * MINUTE * IN_MILLISECONDS);
             return strifeTime ? 40.0f : 10.0f;
+        }
+        else if (bgType == BATTLEGROUND_AB)
+        {
+            return 35.0f;
+        }
+        else if (bgType == BATTLEGROUND_WS)
+        {
+            return 25.0f;
         }
     }
 

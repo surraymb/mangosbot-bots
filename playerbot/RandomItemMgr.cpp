@@ -1434,13 +1434,13 @@ void RandomItemMgr::BuildItemInfoCache()
                 if (slot == EQUIPMENT_SLOT_BODY && statW <= 0)
                     statW = 1;
 
-                // warriors only plate >= 40 lvl
-                if (proto->SubClass == ITEM_SUBCLASS_ARMOR_MAIL && cacheInfo->minLevel >= 40 && clazz == CLASS_WARRIOR)
-                    statW = 0;
+                // warriors only plate >= 40 lvl  - disabled these because we value armor anyway, if the other stats are good enough why not?
+                //if (proto->SubClass == ITEM_SUBCLASS_ARMOR_MAIL && cacheInfo->minLevel >= 40 && clazz == CLASS_WARRIOR)
+                //    statW = 0;
 
                 // paladin tank/dps only plate >= 40 lvl
-                if (proto->SubClass == ITEM_SUBCLASS_ARMOR_MAIL && cacheInfo->minLevel >= 40 && clazz == CLASS_PALADIN && spec != 4)
-                    statW = 0;
+                //if (proto->SubClass == ITEM_SUBCLASS_ARMOR_MAIL && cacheInfo->minLevel >= 40 && clazz == CLASS_PALADIN && spec != 4)
+                //    statW = 0;
 
                 // some trinkets have no stats
                 if (cacheInfo->slot == EQUIPMENT_SLOT_TRINKET1 ||
@@ -1780,8 +1780,8 @@ uint32 RandomItemMgr::CalculateStatWeight(uint8 playerclass, uint8 spec, ItemPro
                         if ((spellproto->EffectMiscValue[j] & SPELL_SCHOOL_MASK_NATURE) != 0)
                             specialDamage += CalculateSingleStatWeight(playerclass, spec, "natsplpwr", spellDamage);
 
-                        if (!isWhitelist && !specialDamage && isSpellDamageItem)
-                            return 0;
+                        //if (!isWhitelist && !specialDamage && isSpellDamageItem)
+                        //    return 0;
 
                         effectAuraDamageStatWeight += specialDamage;
                     }
@@ -2100,59 +2100,59 @@ uint32 RandomItemMgr::CalculateStatWeight(uint8 playerclass, uint8 spec, ItemPro
         return 0;
 
     // check for caster item
-    if (isCasterItem || hasInt || spellHeal || spellPower || isSpellDamageItem || isHealingItem)
-    {
-        if (!isWhitelist && (!hasMana || (noCaster && !(spec == 6 || spec == 30 || spec == 32 || spec == 21))) && (spellHeal || isHealingItem || isSpellDamageItem || spellPower))
-            return 0;
-
-        if (!isWhitelist && !hasMana && hasInt)
-            return 0;
-
-        if (!isWhitelist && !hasMana && noCaster && (spellPower > attackPower || spellHeal > attackPower))
-            return 0;
-
-#ifndef MANGOSBOT_TWO
-        if (!isWhitelist && (spec != 6 && spec != 21) && !spellPower && !spellHeal && isSpellDamageItem)
-            return 0;
-
-        if (!isWhitelist && /*(spec != 6 && spec != 21) && */!spellHeal && isHealingItem && !isSpellDamageItem)
-            return 0;
-#endif
-
-        if (!isWhitelist && (spec != 6 && spec != 21) && !noCaster && isSpellDamageItem && !spellPower && !(spellDamage && spellHealing && proto->IsWeapon() && proto->InventoryType == INVTYPE_WEAPONMAINHAND))
-            return 0;
-
-        bool playerCaster = false;
-        for (vector<WeightScaleStat>::iterator i = m_weightScales[spec].stats.begin(); i != m_weightScales[spec].stats.end(); ++i)
-        {
-            if (i->stat == "splpwr" || i->stat == "int" || i->stat == "manargn" || i->stat == "splheal" || i->stat == "spellcritstrkrtng" || i->stat == "spellhitrtng")
-            {
-                playerCaster = true;
-            }
-        }
-
-        if (!isWhitelist && (spec != 6 && spec != 21 && playerclass != CLASS_HUNTER) && !playerCaster)
-            return 0;
-    }
-
-    // check for caster item
-    if (isAttackItem)
-    {
-        if (!isWhitelist && hasMana && !noCaster && !(hasInt || spellPower || spellHeal || isHealingItem || isSpellDamageItem))
-            return 0;
-
-        bool playerAttacker = false;
-        for (vector<WeightScaleStat>::iterator i = m_weightScales[spec].stats.begin(); i != m_weightScales[spec].stats.end(); ++i)
-        {
-            if (i->stat == "str" || i->stat == "agi" || i->stat == "atkpwr" || i->stat == "mledps" || i->stat == "rgddps" || i->stat == "hitrtng" || i->stat == "critstrkrtng")
-            {
-                playerAttacker = true;
-            }
-        }
-
-        if (!isWhitelist && !playerAttacker)
-            return 0;
-    }
+//    if (isCasterItem || hasInt || spellHeal || spellPower || isSpellDamageItem || isHealingItem)
+//    {
+//        if (!isWhitelist && (!hasMana || (noCaster && !(spec == 6 || spec == 30 || spec == 32 || spec == 21))) && (spellHeal || isHealingItem || isSpellDamageItem || spellPower))
+//            return 0;
+//
+//        if (!isWhitelist && !hasMana && hasInt)
+//            return 0;
+//
+//        if (!isWhitelist && !hasMana && noCaster && (spellPower > attackPower || spellHeal > attackPower))
+//            return 0;
+//
+//#ifndef MANGOSBOT_TWO
+//        if (!isWhitelist && (spec != 6 && spec != 21) && !spellPower && !spellHeal && isSpellDamageItem)
+//            return 0;
+//
+//        if (!isWhitelist && /*(spec != 6 && spec != 21) && */!spellHeal && isHealingItem && !isSpellDamageItem)
+//            return 0;
+//#endif
+//
+//        if (!isWhitelist && (spec != 6 && spec != 21) && !noCaster && isSpellDamageItem && !spellPower && !(spellDamage && spellHealing && proto->IsWeapon() && proto->InventoryType == INVTYPE_WEAPONMAINHAND))
+//            return 0;
+//
+//        bool playerCaster = false;
+//        for (vector<WeightScaleStat>::iterator i = m_weightScales[spec].stats.begin(); i != m_weightScales[spec].stats.end(); ++i)
+//        {
+//            if (i->stat == "splpwr" || i->stat == "int" || i->stat == "manargn" || i->stat == "splheal" || i->stat == "spellcritstrkrtng" || i->stat == "spellhitrtng")
+//            {
+//                playerCaster = true;
+//            }
+//        }
+//
+//        if (!isWhitelist && (spec != 6 && spec != 21 && playerclass != CLASS_HUNTER) && !playerCaster)
+//            return 0;
+//    }
+//
+//    // check for caster item
+//    if (isAttackItem)
+//    {
+//        if (!isWhitelist && hasMana && !noCaster && !(hasInt || spellPower || spellHeal || isHealingItem || isSpellDamageItem))
+//            return 0;
+//
+//        bool playerAttacker = false;
+//        for (vector<WeightScaleStat>::iterator i = m_weightScales[spec].stats.begin(); i != m_weightScales[spec].stats.end(); ++i)
+//        {
+//            if (i->stat == "str" || i->stat == "agi" || i->stat == "atkpwr" || i->stat == "mledps" || i->stat == "rgddps" || i->stat == "hitrtng" || i->stat == "critstrkrtng")
+//            {
+//                playerAttacker = true;
+//            }
+//        }
+//
+//        if (!isWhitelist && !playerAttacker)
+//            return 0;
+//    }
     
 
     itSpec = (ItemSpecType)specType;

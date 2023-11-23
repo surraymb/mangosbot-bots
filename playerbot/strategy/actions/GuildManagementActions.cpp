@@ -241,12 +241,12 @@ bool GuildManageNearbyAction::isUseful()
 
 bool GuildLeaveAction::Execute(Event& event)
 {
-    Player* owner = event.getOwner();
-    if (owner && !ai->GetSecurity()->CheckLevelFor(PlayerbotSecurityLevel::PLAYERBOT_SECURITY_INVITE, false, owner, true))
-    {
-        ai->TellError("Sorry, I am happy in my guild :)");
-        return false;
-    }
+    //Player* owner = event.getOwner();
+    //if (owner && !ai->GetSecurity()->CheckLevelFor(PlayerbotSecurityLevel::PLAYERBOT_SECURITY_INVITE, false, owner, true))
+    //{
+    //    ai->TellError("Sorry, I am happy in my guild :)");
+    //    return false;
+    //}
 
     Guild* guild = sGuildMgr.GetGuildById(bot->GetGuildId()); 
     

@@ -490,15 +490,16 @@ string PlayerbotHolder::ProcessBotCommand(string cmd, ObjectGuid guid, ObjectGui
         if (!bot)
             return "bot not found";
 
+        if (cmd == "gear" || cmd == "equip") // make this command accessible so we can reset any random bot's gear we want
+        {
+            PlayerbotFactory factory(bot, bot->GetLevel());
+            factory.EquipGear();
+            return "random gear equipped";
+        }
+
         Player* master = bot->GetPlayerbotAI()->GetMaster();
         if (master)
         {
-            if (cmd == "gear" || cmd == "equip")
-            {
-                PlayerbotFactory factory(bot, bot->GetLevel());
-                factory.EquipGear();
-                return "random gear equipped";
-            }
             if (cmd == "equip=upgrade" || cmd == "gear=upgrade" || cmd == "upgrade" || cmd == "equip=sync")
             {
                 const bool syncWithMaster = cmd == "equip=sync";

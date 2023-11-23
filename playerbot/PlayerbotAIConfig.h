@@ -96,6 +96,7 @@ public:
     float usePotionChance;
     float useHSChance;
     bool freeWorldBuffs;
+    float attackEmoteChance; //ike3 addition
     uint32 minRandomBots, maxRandomBots;
     uint32 randomBotUpdateInterval, randomBotCountChangeMinInterval, randomBotCountChangeMaxInterval;
     uint32 loginBoostPercentage;
