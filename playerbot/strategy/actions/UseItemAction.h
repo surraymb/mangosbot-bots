@@ -217,8 +217,8 @@ namespace ai
         bool Execute(Event& event) override
         {
             // Check the chance of using a healthstone (only in pvp)
-            const bool shouldUsePotion = !ai->IsInPvp() || frand(0.0f, 1.0f) < sPlayerbotAIConfig.usePotionChance;
-            if (shouldUsePotion)
+            const bool shouldUseHS = !ai->IsInPvp() || frand(0.0f, 1.0f) < sPlayerbotAIConfig.useHSChance;
+            if (shouldUseHS)
             {
                 return UseItemIdAction::Execute(event);
             }

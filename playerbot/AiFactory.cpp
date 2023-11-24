@@ -811,7 +811,15 @@ void AiFactory::AddDefaultNonCombatStrategies(Player* player, PlayerbotAI* const
         }
     }
 
-    nonCombatEngine->addStrategies("wbuff", NULL);
+    // Check the setting to decide if bots should get world buffs
+    if (sPlayerbotAIConfig.freeWorldBuffs)
+    {
+        nonCombatEngine->addStrategies("wbuff", NULL);
+    }
+    else
+    {
+        nonCombatEngine->removeStrategy("wbuff");
+    }
 
     if (!player->InBattleGround())
     {
