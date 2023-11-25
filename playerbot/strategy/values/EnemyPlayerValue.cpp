@@ -196,8 +196,12 @@ float EnemyPlayerValue::GetMaxAttackDistance(Player* bot)
 #endif
         if (bgType == BATTLEGROUND_AV)
         {
-            bool strifeTime = bg->GetStartTime() < (uint32)(20 * MINUTE * IN_MILLISECONDS);
+            bool strifeTime = bg->GetStartTime() < (uint32)(30 * MINUTE * IN_MILLISECONDS);
             return strifeTime ? 40.0f : 10.0f;
+        }
+        if (bgType == BATTLEGROUND_WS)
+        {
+            return 30.0f;
         }
     }
 
