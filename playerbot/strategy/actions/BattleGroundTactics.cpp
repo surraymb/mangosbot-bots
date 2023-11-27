@@ -3369,22 +3369,22 @@ bool BGTactics::selectObjective(bool reset)
         {
             if (bot->GetTeam() == ALLIANCE)
             {
-                if (teamFlagTaken())
-                {
-                    Position hidePos = WS_FLAG_HIDE_ALLIANCE[urand(0, 4)];
-                    pos.Set(hidePos.x, hidePos.y, hidePos.z, bot->GetMapId());
-                }
-                else
+                //if (teamFlagTaken())
+                //{
+                //    Position hidePos = WS_FLAG_HIDE_ALLIANCE[urand(0, 4)];
+                //    pos.Set(hidePos.x, hidePos.y, hidePos.z, bot->GetMapId());
+                //}
+                //else
                     pos.Set(WS_FLAG_POS_ALLIANCE.x, WS_FLAG_POS_ALLIANCE.y, WS_FLAG_POS_ALLIANCE.z, bot->GetMapId());
             }
             else
             {
-                if (teamFlagTaken())
-                {
-                    Position hidePos = WS_FLAG_HIDE_HORDE[urand(0, 4)];
-                    pos.Set(hidePos.x, hidePos.y, hidePos.z, bot->GetMapId());
-                }
-                else
+                //if (teamFlagTaken())
+                //{
+                //    Position hidePos = WS_FLAG_HIDE_HORDE[urand(0, 4)];
+                //    pos.Set(hidePos.x, hidePos.y, hidePos.z, bot->GetMapId());
+                //}
+                //else
                     pos.Set(WS_FLAG_POS_HORDE.x, WS_FLAG_POS_HORDE.y, WS_FLAG_POS_HORDE.z, bot->GetMapId());
             }
 
@@ -4563,21 +4563,17 @@ bool BGTactics::resetObjective()
 
     ai::PositionMap& posMap = context->GetValue<ai::PositionMap&>("position")->Get();
     ai::PositionEntry pos = context->GetValue<ai::PositionMap&>("position")->Get()["bg objective"];
-    // do not switch hiding spots
+    // do not switch hiding spots >> just move straight to flag spot it's the most robust way. add some unpredictability at some point...
     if (teamFlagTaken() && (bot->HasAura(BG_WS_SPELL_WARSONG_FLAG) || bot->HasAura(BG_WS_SPELL_SILVERWING_FLAG)))
     {
-        return false;
-
-        /*if (bot->GetTeam() == HORDE)
+        if (bot->GetTeam() == ALLIANCE)
         {
-            if (pos.x != WS_FLAG_POS_HORDE.x && pos.x != WS_FLAG_POS_ALLIANCE.x && pos.y != WS_FLAG_POS_HORDE.y && pos.y != WS_FLAG_POS_ALLIANCE.y)
-                return false;
+            pos.Set(WS_FLAG_POS_ALLIANCE.x, WS_FLAG_POS_ALLIANCE.y, WS_FLAG_POS_ALLIANCE.z, bot->GetMapId());
         }
         else
         {
-            if (pos.x != WS_FLAG_POS_HORDE.x && pos.x != WS_FLAG_POS_ALLIANCE.x && pos.y != WS_FLAG_POS_HORDE.y && pos.y != WS_FLAG_POS_ALLIANCE.y)
-                return false;
-        }*/
+            pos.Set(WS_FLAG_POS_HORDE.x, WS_FLAG_POS_HORDE.y, WS_FLAG_POS_HORDE.z, bot->GetMapId());
+        }
     }
     pos.Reset();
     posMap["bg objective"] = pos;
