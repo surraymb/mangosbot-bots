@@ -40,6 +40,10 @@ private:
 
 Unit* PartyMemberToResurrect::Calculate()
 {
+    if (bot->InBattleGround())
+    {
+        return false; // CUSTOM disable bots trying to resurrection teammates in graveyards spending their mana on nothing. TODO allow res in combat for druids
+    }
 	FindDeadPlayer finder(ai, this);
     return FindPartyMember(finder);
 }
