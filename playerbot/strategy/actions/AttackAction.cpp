@@ -130,12 +130,20 @@ bool AttackAction::Attack(Player* requester, Unit* target)
             UnitAI* creatureAI = ((Creature*)pet)->AI();
             if (creatureAI)
             {
-                creatureAI->SetReactState(REACT_DEFENSIVE);
-
                 // Don't send the pet to attack if the bot is waiting for attack
                 if (!isWaitingForAttack && (!ai->HasStrategy("stay", BotState::BOT_STATE_COMBAT) || AI_VALUE2(float, "distance", "current target") < ai->GetRange("spell")))
                 {
-                    creatureAI->AttackStart(target);
+                    // Reset the pet state if no master
+                    if (creatureAI->GetReactState() == REACT_PASSIVE && !ai->GetMaster())
+                    {
+                        creatureAI->SetReactState(REACT_DEFENSIVE);
+                    }
+
+                    // Don't send the pet to attack if set to passive
+                    if (creatureAI->GetReactState() != REACT_PASSIVE)
+                    {
+                        creatureAI->AttackStart(target);
+                    }
                 }
             }
         }
@@ -148,15 +156,7 @@ bool AttackAction::Attack(Player* requester, Unit* target)
         // Don't attack target if it is waiting for attack or in stealth
         if (!ai->HasStrategy("stealthed", BotState::BOT_STATE_COMBAT) && !isWaitingForAttack)
         {
-            if (urand(0, 100) < sPlayerbotAIConfig.attackEmoteChance * 100)
-            {
-                vector<uint32> sounds;
-                sounds.push_back(TEXTEMOTE_OPENFIRE);
-                sounds.push_back(305);
-                sounds.push_back(307);
-                ai->PlaySound(sounds[urand(0, sounds.size() - 1)]);
-            }
-
+            ai->PlayAttackEmote(1);
             return bot->Attack(target, !ai->IsRanged(bot) || (sServerFacade.GetDistance2d(bot, target) < 5.0f));
         }
         else

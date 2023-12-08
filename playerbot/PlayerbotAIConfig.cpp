@@ -142,7 +142,7 @@ bool PlayerbotAIConfig::Initialize()
     usePotionChance = config.GetFloatDefault("AiPlayerbot.UsePotionChance", 1.0f);
     useHSChance = config.GetFloatDefault("AiPlayerbot.UseHSChance", 1.0f);
     freeWorldBuffs = config.GetFloatDefault("AiPlayerbot.freeWorldBuffs", true);
-    attackEmoteChance = config.GetFloatDefault("AiPlayerbot.AttackEmoteChance", 0.01f);
+    attackEmoteChance = config.GetFloatDefault("AiPlayerbot.AttackEmoteChance", 0.00f);
 
     iterationsPerTick = config.GetIntDefault("AiPlayerbot.IterationsPerTick", 100);
 
@@ -184,6 +184,8 @@ bool PlayerbotAIConfig::Initialize()
     maxRandomBotReviveTime = config.GetIntDefault("AiPlayerbot.MaxRandomReviveTime", 300);
     randomBotTeleportDistance = config.GetIntDefault("AiPlayerbot.RandomBotTeleportDistance", 1000);
     randomBotTeleportNearPlayer = config.GetBoolDefault("AiPlayerbot.RandomBotTeleportNearPlayer", false);
+    randomBotTeleportNearPlayerMaxAmount = config.GetIntDefault("AiPlayerbot.RandomBotTeleportNearPlayerMaxAmount", 0);
+    randomBotTeleportNearPlayerMaxAmountRadius = config.GetFloatDefault("AiPlayerbot.RandomBotTeleportNearPlayerMaxAmountRadius", 0.0f);
     randomBotsPerInterval = config.GetIntDefault("AiPlayerbot.RandomBotsPerInterval", 3);
     randomBotsMaxLoginsPerInterval = config.GetIntDefault("AiPlayerbot.RandomBotsMaxLoginsPerInterval", randomBotsPerInterval);
     minRandomBotsPriceChangeInterval = config.GetIntDefault("AiPlayerbot.MinRandomBotsPriceChangeInterval", 2 * 3600);

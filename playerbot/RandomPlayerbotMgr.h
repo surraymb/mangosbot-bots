@@ -93,9 +93,9 @@ public:
         void OnPlayerLogin(Player* player);
         void OnPlayerLoginError(uint32 bot);
         Player* GetRandomPlayer();
-        PlayerBotMap GetPlayers() { return players; };
+        PlayerBotMap& GetPlayers() { return players; };
         Player* GetPlayer(uint32 playerGuid);
-        PlayerBotMap GetAllBots() { return playerBots; };
+        PlayerBotMap& GetAllBots() { return playerBots; };
         void PrintStats();
         double GetBuyMultiplier(Player* bot);
         double GetSellMultiplier(Player* bot);

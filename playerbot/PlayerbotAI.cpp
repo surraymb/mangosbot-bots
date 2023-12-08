@@ -23,6 +23,7 @@
 #include "Group.h"
 #include "Pet.h"
 #include "SpellAuras.h"
+#include "SpellMgr.h"
 #include "../ahbot/AhBot.h"
 #include "GuildTaskMgr.h"
 #include "PlayerbotDbStore.h"
@@ -2860,6 +2861,10 @@ bool PlayerbotAI::CanCastSpell(uint32 spellid, Unit* target, uint8 effectMask, b
     if (!spellid)
         return false;
 
+    Pet* pet = bot->GetPet();
+    if (pet && pet->HasSpell(spellid) && pet->IsSpellReady(spellid))
+        return true;
+
     if (bot->hasUnitState(UNIT_STAT_CAN_NOT_REACT_OR_LOST_CONTROL))
     {
         // Spells that can be casted while out of control
@@ -2875,10 +2880,6 @@ bool PlayerbotAI::CanCastSpell(uint32 spellid, Unit* target, uint8 effectMask, b
 
     if (checkHasSpell && !HasSpell(spellid))
         return false;
-
-    Pet* pet = bot->GetPet();
-    if (pet && pet->HasSpell(spellid))
-        return true;
 
     if (!bot->IsSpellReady(spellid))
         return false;
@@ -2989,24 +2990,25 @@ bool PlayerbotAI::CanCastSpell(uint32 spellid, GameObject* goTarget, uint8 effec
     if (!spellid)
         return false;
 
-    if (bot->hasUnitState(UNIT_STAT_CAN_NOT_REACT_OR_LOST_CONTROL))
-        return false;
-
     Pet* pet = bot->GetPet();
-    if (pet && pet->HasSpell(spellid))
+    if (pet && pet->HasSpell(spellid) && pet->IsSpellReady(spellid))
         return true;
+
+    if (bot->hasUnitState(UNIT_STAT_CAN_NOT_REACT_OR_LOST_CONTROL))
+    {
+        // Spells that can be casted while out of control
+        const std::list<uint32> ignoreOutOfControllSpells = { 642, 1020, 1499, 1953, 7744, 11958, 13795, 13809, 13813, 14302, 14303, 14304, 14305, 14310, 14311, 14316, 14317, 27023, 27025, 34600, 49055, 49056, 49066, 49067 };
+        if (std::find(ignoreOutOfControllSpells.begin(), ignoreOutOfControllSpells.end(), spellid) == ignoreOutOfControllSpells.end())
+        {
+            return false;
+        }
+    }
 
     if (checkHasSpell && !bot->HasSpell(spellid))
         return false;
 
-#ifdef MANGOS
-    if (bot->HasSpellCooldown(spellid))
-        return false;
-#endif
-#ifdef CMANGOS
     if (!bot->IsSpellReady(spellid))
         return false;
-#endif
 
     SpellEntry const* spellInfo = sServerFacade.LookupSpellInfo(spellid);
     if (!spellInfo)
@@ -3065,16 +3067,21 @@ bool PlayerbotAI::CanCastSpell(uint32 spellid, float x, float y, float z, uint8 
         return false;
 
     Pet* pet = bot->GetPet();
-    if (pet && pet->HasSpell(spellid))
+    if (pet && pet->HasSpell(spellid) && pet->IsSpellReady(spellid))
         return true;
+
+    if (bot->hasUnitState(UNIT_STAT_CAN_NOT_REACT_OR_LOST_CONTROL))
+    {
+        // Spells that can be casted while out of control
+        const std::list<uint32> ignoreOutOfControllSpells = { 642, 1020, 1499, 1953, 7744, 11958, 13795, 13809, 13813, 14302, 14303, 14304, 14305, 14310, 14311, 14316, 14317, 27023, 27025, 34600, 49055, 49056, 49066, 49067 };
+        if (std::find(ignoreOutOfControllSpells.begin(), ignoreOutOfControllSpells.end(), spellid) == ignoreOutOfControllSpells.end())
+        {
+            return false;
+        }
+    }
 
     if (checkHasSpell && !bot->HasSpell(spellid))
         return false;
-
-#ifdef MANGOS
-    if (bot->HasSpellCooldown(spellid))
-        return false;
-#endif
 
     SpellEntry const* spellInfo = sServerFacade.LookupSpellInfo(spellid);
     if (!spellInfo)
@@ -3157,25 +3164,9 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target, Item* itemTarget, bool
         target = bot;
 
     Pet* pet = bot->GetPet();
-	SpellEntry const *pSpellInfo = sServerFacade.LookupSpellInfo(spellId);
-	if (pet && pet->HasSpell(spellId))
+    if (pet && pet->HasSpell(spellId))
     {
-	    bool autocast = false;
-	    for(AutoSpellList::iterator i = pet->m_autospells.begin(); i != pet->m_autospells.end(); ++i)
-	    {
-	        if (*i == spellId)
-	        {
-	            autocast = true;
-	            break;
-	        }
-	    }
-
-		pet->ToggleAutocast(spellId, !autocast);
-		ostringstream out;
-		out << (autocast ? "|cffff0000|Disabling" : "|cFF00ff00|Enabling") << " pet auto-cast for ";
-		out << chatHelper.formatSpell(pSpellInfo);
-        TellPlayer(GetMaster(), out);
-        return true;
+        return CastPetSpell(spellId, target);
     }
 
     aiObjectContext->GetValue<LastMovement&>("last movement")->Get().Set(NULL);
@@ -3221,6 +3212,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target, Item* itemTarget, bool
         return false;
     }
 
+    const SpellEntry* pSpellInfo = sServerFacade.LookupSpellInfo(spellId);
     Spell *spell = new Spell(bot, pSpellInfo, false);
 
     SpellCastTargets targets;
@@ -3331,14 +3323,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, Unit* target, Item* itemTarget, bool
     if (spellSuccess != SPELL_CAST_OK)
         return false;
 
-    if (urand(0, 100) < sPlayerbotAIConfig.attackEmoteChance * 600 && bot->IsInCombat())
-    {
-        vector<uint32> sounds;
-        sounds.push_back(TEXTEMOTE_OPENFIRE);
-        sounds.push_back(305);
-        sounds.push_back(307);
-        PlaySound(sounds[urand(0, sounds.size() - 1)]);
-    }
+    PlayAttackEmote(6);
 
     if(waitForSpell)
     {
@@ -3374,25 +3359,9 @@ bool PlayerbotAI::CastSpell(uint32 spellId, float x, float y, float z, Item* ite
         return false;
 
     Pet* pet = bot->GetPet();
-    SpellEntry const* pSpellInfo = sServerFacade.LookupSpellInfo(spellId);
     if (pet && pet->HasSpell(spellId))
     {
-        bool autocast = false;
-        for (AutoSpellList::iterator i = pet->m_autospells.begin(); i != pet->m_autospells.end(); ++i)
-        {
-            if (*i == spellId)
-            {
-                autocast = true;
-                break;
-            }
-        }
-
-        pet->ToggleAutocast(spellId, !autocast);
-        ostringstream out;
-        out << (autocast ? "|cffff0000|Disabling" : "|cFF00ff00|Enabling") << " pet auto-cast for ";
-        out << chatHelper.formatSpell(pSpellInfo);
-        TellPlayer(GetMaster(), out);
-        return true;
+        return CastPetSpell(spellId, nullptr);
     }
 
     aiObjectContext->GetValue<LastMovement&>("last movement")->Get().Set(NULL);
@@ -3440,6 +3409,7 @@ bool PlayerbotAI::CastSpell(uint32 spellId, float x, float y, float z, Item* ite
         return false;
     }
 
+    const SpellEntry* pSpellInfo = sServerFacade.LookupSpellInfo(spellId);
     Spell* spell = new Spell(bot, pSpellInfo, false);
 
     SpellCastTargets targets;
@@ -3562,6 +3532,44 @@ bool PlayerbotAI::CastSpell(uint32 spellId, float x, float y, float z, Item* ite
     }
 
     return true;
+}
+
+bool PlayerbotAI::CastPetSpell(uint32 spellId, Unit* target)
+{
+    Pet* pet = bot->GetPet();
+    if (pet && spellId && pet->HasSpell(spellId))
+    {
+        auto IsAutocastActive = [&pet, &spellId]() -> bool
+        {
+            for (AutoSpellList::iterator i = pet->m_autospells.begin(); i != pet->m_autospells.end(); ++i)
+            {
+                if (*i == spellId)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        };
+
+        // Send pet spell action packet
+        uint8 flag = ACT_PASSIVE;
+        if (IsAutocastable(spellId))
+        {
+            flag = IsAutocastActive() ? ACT_ENABLED : ACT_DISABLED;
+        }
+
+        uint32 command = (flag << 24) | spellId;
+
+        WorldPacket data(CMSG_PET_ACTION);
+        data << pet->GetObjectGuid();
+        data << command;
+        data << (target ? target->GetObjectGuid() : ObjectGuid());
+        bot->GetSession()->HandlePetAction(data);
+        return true;
+    }
+
+    return false;
 }
 
 bool PlayerbotAI::CanCastVehicleSpell(uint32 spellId, Unit* target)
@@ -6032,4 +6040,22 @@ bool PlayerbotAI::HasPlayerRelation()
 void PlayerbotAI::QueueChatResponse(uint8 msgtype, ObjectGuid guid1, ObjectGuid guid2, std::string message, std::string chanName, std::string name)
 {
     chatReplies.push(ChatQueuedReply(msgtype, guid1.GetCounter(), guid2.GetCounter(), message, chanName, name, time(0) + urand(inCombat ? 10 : 5, inCombat ? 25 : 15)));
+}
+
+
+bool PlayerbotAI::PlayAttackEmote(float chanceMultiplier)
+{
+    auto group = bot->GetGroup();
+    if (group) chanceMultiplier /= (group->GetMembersCount() - 1);
+    if ((float)urand(0, 10000) * chanceMultiplier < sPlayerbotAIConfig.attackEmoteChance * 10000.0f && bot->IsInCombat())
+    {
+        vector<uint32> sounds;
+        sounds.push_back(TEXTEMOTE_OPENFIRE);
+        sounds.push_back(305);
+        sounds.push_back(307);
+        PlaySound(sounds[urand(0, sounds.size() - 1)]);
+        return true;
+    }
+
+    return false;
 }

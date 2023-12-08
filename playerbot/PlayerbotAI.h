@@ -348,6 +348,7 @@ public:
     void WaitForSpellCast(Spell *spell);
     bool PlaySound(uint32 emote);
     bool PlayEmote(uint32 emote);
+    bool PlayAttackEmote(float chanceDivider);
     void Ping(float x, float y);
     void Poi(float x, float y, string icon_name = "This way", Player* player = nullptr, uint32 flags = 99, uint32 icon = 6 /* red flag */, uint32 icon_data = 0);
     Item * FindPoison() const;
@@ -398,6 +399,7 @@ public:
     virtual bool CastSpell(string name, Unit* target, Item* itemTarget = NULL, bool waitForSpell = true, uint32* outSpellDuration = NULL, bool canUseReagentCheat = true);
     bool CastSpell(uint32 spellId, Unit* target, Item* itemTarget = NULL, bool waitForSpell = true, uint32* outSpellDuration = NULL, bool canUseReagentCheat = true);
     bool CastSpell(uint32 spellId, float x, float y, float z, Item* itemTarget = NULL, bool waitForSpell = true, uint32* outSpellDuration = NULL, bool canUseReagentCheat = true);
+    bool CastPetSpell(uint32 spellId, Unit* target);
     bool CastVehicleSpell(uint32 spellId, Unit* target);
     bool CastVehicleSpell(uint32 spellId, float x, float y, float z);
 
