@@ -94,6 +94,8 @@ public:
     float randomBotMaxLevelChance;
     float randomBotRpgChance;
     float usePotionChance;
+    float useHSChance;
+    bool freeWorldBuffs;
     float attackEmoteChance;
     uint32 minRandomBots, maxRandomBots;
     uint32 randomBotUpdateInterval, randomBotCountChangeMinInterval, randomBotCountChangeMaxInterval;
