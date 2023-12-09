@@ -89,9 +89,9 @@ std::vector<uint32> const vFlagsAB = { BG_AB_BANNER_ALLIANCE , BG_AB_BANNER_CONT
 std::vector<uint32> const vFlagsWS = { GO_WS_SILVERWING_FLAG, GO_WS_WARSONG_FLAG, GO_WS_SILVERWING_FLAG_DROP, GO_WS_WARSONG_FLAG_DROP };
 
 
-static std::map<uint32, GameObject*> botSelectedObjectives; // Map bot's GUID to its selected GameObject
-static std::map<uint32, uint32> botObjectiveSelectionTime; // Map bot's GUID to the time when it last selected an objective
-static std::map<uint32, uint32> botLastObjectiveCheckTime; // Tracks the last time each bot checked its objective
+static map<uint32, GameObject*> botSelectedObjectives;
+static map<uint32, uint32> botObjectiveSelectionTime;
+static map<uint32, uint32> botLastObjectiveCheckTime;
 
 #ifndef MANGOSBOT_ZERO
 std::vector<uint32> const vFlagsEY = { GO_EY_NETHERSTORM_FLAG, GO_EY_NETHERSTORM_FLAG_DROP};
@@ -3489,14 +3489,14 @@ bool BGTactics::selectObjective(bool reset)
     case BATTLEGROUND_AB:
     {
         //for reference:
-        //static std::map<uint32, GameObject*> botSelectedObjectives; // Map bot's GUID to its selected GameObject
-        //static std::map<uint32, uint32> botObjectiveSelectionTime; // Map bot's GUID to the time when it selected the objective
-        //static std::map<uint32, uint32> botLastObjectiveCheckTime; // Tracks the last time each bot checked its objective
+        //static map<uint32, GameObject*> botSelectedObjectives; // Map bot's GUID to its selected GameObject
+        //static map<uint32, uint32> botObjectiveSelectionTime; // Map bot's GUID to the time when it selected the objective
+        //static map<uint32, uint32> botLastObjectiveCheckTime; // Tracks the last time each bot checked its objective
 
         // Common setup for both HORDE and ALLIANCE
         uint32 role = context->GetValue<uint32>("bg role")->Get();
         bool defender = role < 6;
-        uint32 botGUID = bot->GetGUIDLow(); // Getting the bot's unique ID
+        uint32 botGUID = bot->GetGUIDLow();
 
         bool isDead = bot->IsDead();
 
@@ -3513,7 +3513,6 @@ bool BGTactics::selectObjective(bool reset)
         {
             bool isActiveNeutral = bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_NEUTRAL);
 
-            // isOccupied and isContested remain unchanged:
             bool isOccupied = (bot->GetTeam() == HORDE) ? bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_ALLY_OCCUPIED) : bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_HORDE_OCCUPIED);
             bool isContested = (bot->GetTeam() == HORDE) ? bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_ALLY_CONTESTED) : bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_HORDE_CONTESTED);
             bool isFriendly = (bot->GetTeam() == HORDE) ? bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_HORDE_OCCUPIED) || bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_HORDE_CONTESTED) : bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_ALLY_OCCUPIED) || bg->IsActiveEvent(objective.first, BG_AB_NODE_STATUS_ALLY_CONTESTED);
@@ -3538,7 +3537,7 @@ bool BGTactics::selectObjective(bool reset)
             uniqueObjectives.find(botSelectedObjectives[botGUID]) != uniqueObjectives.end())
         {
             uint32 elapsedTime = WorldTimer::getMSTime() - botObjectiveSelectionTime[botGUID];
-            float probabilityToKeepSameObjective = 1.0f; // Default 100%
+            float probabilityToKeepSameObjective = 1.0f; // Start at 100% then lower over time
 
             GameObject* lastObj = botSelectedObjectives[botGUID];
             float const lastObjDist = sqrt(bot->GetDistance(lastObj));
@@ -3551,7 +3550,7 @@ bool BGTactics::selectObjective(bool reset)
                     probabilityToKeepSameObjective -= (0.01f * extraTime); // Decrease by 1% for each second past 40 seconds
                 }
 
-                float randomValue = float(rand() % 101) / 100.0f; // Generate a random float between 0.0 to 1.0
+                float randomValue = float(rand() % 101) / 100.0f;
 
                 if (randomValue <= probabilityToKeepSameObjective)
                 {
@@ -3561,13 +3560,13 @@ bool BGTactics::selectObjective(bool reset)
             }
             else
             {
-                if (elapsedTime > 20000)
+                if (elapsedTime > 40000)
                 {
-                    uint32 extraTime = (elapsedTime - 20000) / 1000; // Calculate seconds past the 20 seconds mark
+                    uint32 extraTime = (elapsedTime - 40000) / 1000; // Calculate seconds past the 40 seconds mark
                     probabilityToKeepSameObjective -= (0.01f * extraTime); // Decrease by 1% for each second past 40 seconds
                 }
 
-                float randomValue = float(rand() % 101) / 100.0f; // Generate a random float between 0.0 to 1.0
+                float randomValue = float(rand() % 101) / 100.0f;
 
                 if (randomValue <= probabilityToKeepSameObjective)
                 {
@@ -3580,7 +3579,6 @@ bool BGTactics::selectObjective(bool reset)
         // If BgObjective is still nullptr at this point, select a new one
         if (!BgObjective && !uniqueObjectives.empty())
         {
-            // Convert the set to a vector to use with 'urand' function
             std::vector<GameObject*> objectives(uniqueObjectives.begin(), uniqueObjectives.end());
 
             // Select a random objective from your unique objectives
