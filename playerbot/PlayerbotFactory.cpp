@@ -640,6 +640,7 @@ void PlayerbotFactory::InitPet()
         pet->SetPower(POWER_HAPPINESS, HAPPINESS_LEVEL_SIZE * 2);
         pet->SetHealth(pet->GetMaxHealth());
         pet->SetFlag(UNIT_FIELD_FLAGS, UNIT_FLAG_PLAYER_CONTROLLED);
+        pet->AI()->SetReactState(REACT_DEFENSIVE);
     }
     else
     {
@@ -658,6 +659,9 @@ void PlayerbotFactory::InitPet()
 
         pet->ToggleAutocast(spellId, true);
     }
+
+    // Force dismiss pet to fix missing flags
+    pet->ForcedDespawn();
 }
 
 void PlayerbotFactory::InitPetSpells()

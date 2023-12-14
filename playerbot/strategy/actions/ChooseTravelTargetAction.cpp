@@ -606,7 +606,7 @@ bool ChooseTravelTargetAction::SetBestTarget(Player* requester, TravelTarget* ta
     target->setTarget(TravelDestinations.front(), travelPoints.front());
 
     if (ai->HasStrategy("debug travel", BotState::BOT_STATE_NON_COMBAT))
-        ai->TellPlayerNoFacing(requester, "Point at " + to_string(floor(target->distance(bot))) + "y selected.");
+        ai->TellPlayerNoFacing(requester, "Point at " + to_string(uint32(target->distance(bot))) + "y selected.");
 
     return target->isActive();
 }
@@ -754,6 +754,13 @@ bool ChooseTravelTargetAction::SetQuestTarget(Player* requester, TravelTarget* t
 
             TravelDestinations.insert(TravelDestinations.end(), questDestinations.begin(), questDestinations.end());
         }
+    }
+
+    if (newQuests && TravelDestinations.empty())
+    {
+        PerformanceMonitorOperation* pmo = sPerformanceMonitor.start(PERF_MON_VALUE, "getQuestTravelDestinations3", &context->performanceStack);
+        TravelDestinations = sTravelMgr.getQuestTravelDestinations(bot, -1, true, false); //If we really don't find any new quests look futher away.
+        if (pmo) pmo->finish();
     }
 
     if (ai->HasStrategy("debug travel", BotState::BOT_STATE_NON_COMBAT))
