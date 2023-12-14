@@ -184,6 +184,7 @@ public:
     uint32 guildTaskAdvertCleanupTime;
 
     uint32 iterationsPerTick;
+    bool optimizeEquipUpgrading;
 
     std::string autoPickReward;
     bool autoEquipUpgradeLoot;

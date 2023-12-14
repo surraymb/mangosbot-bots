@@ -145,6 +145,7 @@ bool PlayerbotAIConfig::Initialize()
     attackEmoteChance = config.GetFloatDefault("AiPlayerbot.AttackEmoteChance", 0.00f);
 
     iterationsPerTick = config.GetIntDefault("AiPlayerbot.IterationsPerTick", 100);
+    optimizeEquipUpgrading = config.GetBoolDefault("AiPlayerbot.OptimizeEquipUpgrading", true);
 
     allowGuildBots = config.GetBoolDefault("AiPlayerbot.AllowGuildBots", true);
     allowMultiAccountAltBots = config.GetBoolDefault("AiPlayerbot.AllowMultiAccountAltBots", true);

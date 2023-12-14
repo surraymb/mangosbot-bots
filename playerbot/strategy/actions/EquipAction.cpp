@@ -189,7 +189,7 @@ bool EquipUpgradesAction::Execute(Event& event)
             return false;
         }
     }
-    else if (event.getSource() == "item push result")
+    else if (event.getSource() == "item push result" && sPlayerbotAIConfig.optimizeEquipUpgrading)
     {
         bool valid = false;
         WorldPacket& data = event.getPacket();
