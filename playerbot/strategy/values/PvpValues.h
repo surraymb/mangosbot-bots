@@ -22,6 +22,12 @@ namespace ai
     public:
         BgRoleValue(PlayerbotAI* ai) : ManualSetValue<uint32>(ai, 0, "bg role") {}
     };
+    
+    class CurrentBgObjectiveValue : public ManualSetValue<string>
+    {
+    public:
+		CurrentBgObjectiveValue(PlayerbotAI* ai) : ManualSetValue<string>(ai, "none", "current bg objective") {}
+	};
 
     class BgMastersValue : public SingleCalculatedValue<list<CreatureDataPair const*>>, public Qualified
     {

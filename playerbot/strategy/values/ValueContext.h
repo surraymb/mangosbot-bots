@@ -285,6 +285,7 @@ namespace ai
             creators["bg master"] = &ValueContext::bg_master;
             creators["enemy flag carrier"] = &ValueContext::enemy_fc;
             creators["team flag carrier"] = &ValueContext::team_fc;
+            creators["current bg objective"] = &ValueContext::current_bg_objective;
 
             creators["home bind"] = &ValueContext::home_bind;
             creators["last long move"] = &ValueContext::last_long_move;
@@ -393,6 +394,7 @@ namespace ai
         static UntypedValue* enemy_fc(PlayerbotAI* ai) { return new FlagCarrierValue(ai, false, true); }
         static UntypedValue* bg_master(PlayerbotAI* ai) { return new BgMasterValue(ai); }
         static UntypedValue* bg_role(PlayerbotAI* ai) { return new BgRoleValue(ai); }
+        static UntypedValue* current_bg_objective(PlayerbotAI* ai) { return new CurrentBgObjectiveValue(ai); }
         static UntypedValue* arena_type(PlayerbotAI* ai) { return new ArenaTypeValue(ai); }
         static UntypedValue* bg_type(PlayerbotAI* ai) { return new BgTypeValue(ai); }
         static UntypedValue* rpg_bg_type(PlayerbotAI* ai) { return new RpgBgTypeValue(ai); }
