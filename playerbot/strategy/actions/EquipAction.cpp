@@ -189,7 +189,7 @@ bool EquipUpgradesAction::Execute(Event& event)
             return false;
         }
     }
-    else if (event.getSource() == "item push result" && sPlayerbotAIConfig.optimizeEquipUpgrading)
+    else if (event.getSource() == "item push result") // && sPlayerbotAIConfig.optimizeEquipUpgrading)
     {
         bool valid = false;
         WorldPacket& data = event.getPacket();
@@ -227,7 +227,7 @@ bool EquipUpgradesAction::Execute(Event& event)
                               itemProto->Class == ItemClass::ITEM_CLASS_ARMOR ||
                               itemProto->Class == ItemClass::ITEM_CLASS_CONTAINER))
             {
-                return false;
+                valid = true;
             }
         }
 
