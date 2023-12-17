@@ -87,6 +87,9 @@ std::vector<uint32> const vFlagsAB = { BG_AB_BANNER_ALLIANCE , BG_AB_BANNER_CONT
                                        BG_AB_BANNER_MINE };
 
 std::vector<uint32> const vFlagsWS = { GO_WS_SILVERWING_FLAG, GO_WS_WARSONG_FLAG, GO_WS_SILVERWING_FLAG_DROP, GO_WS_WARSONG_FLAG_DROP };
+static std::map<uint32, GameObject*> botSelectedObjectives;
+static std::map<uint32, uint32> botObjectiveSelectionTime;
+static std::map<uint32, uint32> botLastObjectiveCheckTime;
 
 
 static map<uint32, GameObject*> botSelectedObjectives;
@@ -2169,8 +2172,8 @@ std::vector<BattleBotPath*> const vPaths_AB =
     &vPath_AB_Blacksmith_to_LumberMill,
     &vPath_AB_Blacksmith_to_GoldMine,
     &vPath_AB_Farm_to_Stable,
-    &vPath_AB_BlacksmithGY_to_LumberMill,
-    &vPath_AB_BlacksmithGY_to_GoldMine,
+    //&vPath_AB_BlacksmithGY_to_LumberMill,
+    //&vPath_AB_BlacksmithGY_to_GoldMine,
 };
 
 std::vector<BattleBotPath*> const vPaths_AV =
@@ -3516,7 +3519,7 @@ bool BGTactics::selectObjective(bool reset)
 
         // Common setup for both HORDE and ALLIANCE
         uint32 role = context->GetValue<uint32>("bg role")->Get();
-        bool defender = role < 6;
+        bool defender = role < 5;
         uint32 botGUID = bot->GetGUIDLow();
 
         bool isDead = bot->IsDead();
@@ -3563,11 +3566,11 @@ bool BGTactics::selectObjective(bool reset)
             GameObject* lastObj = botSelectedObjectives[botGUID];
             float const lastObjDist = sqrt(bot->GetDistance(lastObj));
 
-            if (lastObjDist < 50.00f)
+            if (lastObjDist < 50.00f) // if we are close, stick to the objective a bit longer
             {
-                if (elapsedTime > 50000)
+                if (elapsedTime > 60000)
                 {
-                    uint32 extraTime = (elapsedTime - 50000) / 1000; // Calculate seconds past the 50 seconds mark
+                    uint32 extraTime = (elapsedTime - 60000) / 1000; // Calculate seconds past the 60 seconds mark
                     probabilityToKeepSameObjective -= (0.01f * extraTime); // Decrease by 1% for each second past 40 seconds
                 }
 
@@ -4585,7 +4588,7 @@ bool BGTactics::resetObjective()
 
     ai::PositionMap& posMap = context->GetValue<ai::PositionMap&>("position")->Get();
     ai::PositionEntry pos = context->GetValue<ai::PositionMap&>("position")->Get()["bg objective"];
-    // do not switch hiding spots
+    // do not switch hiding spots - disabled for now until hiding spots reimplemented since it causes bots to stop moving
     //if (teamFlagTaken() && (bot->HasAura(BG_WS_SPELL_WARSONG_FLAG) || bot->HasAura(BG_WS_SPELL_SILVERWING_FLAG)))
     //{
     //    return false;
