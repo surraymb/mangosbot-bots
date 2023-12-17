@@ -248,10 +248,16 @@ bool CheckMountStateAction::isUseful()
     if (bot->IsTaxiFlying())
         return false;
 
-    if (bot->getClass() == CLASS_ROGUE && bot->InBattleGround() && (ai->HasAura("stealth", bot) || ai->HasAura("sprint", bot)))
+    //if (bot->getClass() == CLASS_ROGUE && bot->InBattleGround() && (ai->HasAura("stealth", bot) || ai->HasAura("sprint", bot)))
+    //    return false;
+
+    //if (bot->getClass() == CLASS_DRUID && bot->InBattleGround() && (ai->HasAura("prowl", bot) || ai->HasAura("dash", bot)))
+    //    return false;
+
+    if (bot->getClass() == CLASS_ROGUE && bot->InBattleGround() && (ai->HasAura("sprint", bot)))
         return false;
 
-    if (bot->getClass() == CLASS_DRUID && bot->InBattleGround() && (ai->HasAura("prowl", bot) || ai->HasAura("dash", bot)))
+    if (bot->getClass() == CLASS_DRUID && bot->InBattleGround() && (ai->HasAura("dash", bot)))
         return false;
 
 #ifndef MANGOSBOT_ZERO
