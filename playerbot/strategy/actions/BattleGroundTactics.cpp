@@ -2942,6 +2942,27 @@ bool BGTactics::moveToStart(bool force)
     BattleGround *bg = bot->GetBattleGround();
     if (!bg)
         return false;
+    /*
+    // check if in stealth, if yes, remove aura Stealth, not sure if this works...
+    if (bot->HasStealthAura())
+    {
+        
+        Action removeStealth = RemoveAuraAction(ai, "Stealth");
+        Action removeProwl = RemoveAuraAction(ai, "Prowl");
+
+        removeStealth.Execute(Event());
+        removeProwl.Execute(Event());
+        
+
+        // Create an instance of RemoveAuraAction
+        RemoveAuraAction removeStealthAction = RemoveAuraAction(ai, "stealth");
+        RemoveAuraAction removeProwlAction = RemoveAuraAction(ai, "prowl");
+
+        // Execute the action
+        bool success = removeStealthAction.Execute(Event());
+        success = removeProwlAction.Execute(Event());
+    }
+    */
 
     if (!force && bg->GetStatus() != STATUS_WAIT_JOIN)
         return false;
