@@ -65,6 +65,10 @@ void HunterStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
     */
 
     triggers.push_back(new TriggerNode(
+        "enemy is close",
+        NextAction::array(0, new NextAction("select new target", ACTION_NORMAL + 1), NULL)));
+
+    triggers.push_back(new TriggerNode(
         "counterattack",
         NextAction::array(0, new NextAction("counterattack", ACTION_HIGH + 2), NULL)));
 
@@ -448,9 +452,9 @@ void HunterStingRaidStrategy::InitCombatTriggers(std::list<TriggerNode*>& trigge
 
 void HunterAspectStrategy::InitCombatTriggers(std::list<TriggerNode*>& triggers)
 {
-    triggers.push_back(new TriggerNode(
-        "target of attacker close",
-        NextAction::array(0, new NextAction("aspect of the monkey", ACTION_EMERGENCY), NULL)));
+//    triggers.push_back(new TriggerNode(
+//        "target of attacker close",
+//        NextAction::array(0, new NextAction("aspect of the monkey", ACTION_EMERGENCY), NULL)));
 
     triggers.push_back(new TriggerNode(
         "aspect of the hawk",
