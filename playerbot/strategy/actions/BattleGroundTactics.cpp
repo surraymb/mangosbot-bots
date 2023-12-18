@@ -91,11 +91,6 @@ static std::map<uint32, GameObject*> botSelectedObjectives;
 static std::map<uint32, uint32> botObjectiveSelectionTime;
 static std::map<uint32, uint32> botLastObjectiveCheckTime;
 
-
-static map<uint32, GameObject*> botSelectedObjectives;
-static map<uint32, uint32> botObjectiveSelectionTime;
-static map<uint32, uint32> botLastObjectiveCheckTime;
-
 #ifndef MANGOSBOT_ZERO
 std::vector<uint32> const vFlagsEY = { GO_EY_NETHERSTORM_FLAG, GO_EY_NETHERSTORM_FLAG_DROP};
 #endif
