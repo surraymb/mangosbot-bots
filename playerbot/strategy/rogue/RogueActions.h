@@ -53,6 +53,21 @@ namespace ai
                 return false;
             }
 
+            uint32 botLevel = bot->GetLevel();
+            if (botLevel < 10) // no stealth necessary for low level, and below level 4 (backstab) breaks bots
+            {
+                return false;
+            }
+
+            Item* weapon = bot->GetItemByPos(INVENTORY_SLOT_BAG_0, EQUIPMENT_SLOT_MAINHAND);
+            if (weapon)
+            {
+                if (weapon->GetProto()->SubClass != ITEM_SUBCLASS_WEAPON_DAGGER && botLevel < 24) // unless we have a dagger, we need to wait for cheap shot for stealth attacks to become useful
+                {
+					return false;
+				}
+			}
+
             // do not use with WSG flag
             return !ai->HasAura(23333, bot) && !ai->HasAura(23335, bot) && !ai->HasAura(34976, bot);
         }
