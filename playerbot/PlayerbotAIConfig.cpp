@@ -144,6 +144,18 @@ bool PlayerbotAIConfig::Initialize()
     freeWorldBuffs = config.GetFloatDefault("AiPlayerbot.freeWorldBuffs", true);
     attackEmoteChance = config.GetFloatDefault("AiPlayerbot.AttackEmoteChance", 0.00f);
 
+    jumpNoCombatChance = config.GetFloatDefault("AiPlayerbot.JumpNoCombatChance", 0.5f);
+    jumpMeleeInCombatChance = config.GetFloatDefault("AiPlayerbot.JumpMeleeInCombatChance", 0.5f);
+    jumpRandomChance = config.GetFloatDefault("AiPlayerbot.JumpRandomChance", 0.20f);
+    jumpInPlaceChance = config.GetFloatDefault("AiPlayerbot.JumpInPlaceChance", 0.50f);
+    jumpBackwardChance = config.GetFloatDefault("AiPlayerbot.JumpBackwardChance", 0.10f);
+    jumpHeightLimit = config.GetFloatDefault("AiPlayerbot.JumpHeightLimit", 60.f);
+    jumpInBg = config.GetBoolDefault("AiPlayerbot.JumpInBg", false);
+    jumpWithPlayer = config.GetBoolDefault("AiPlayerbot.JumpWithPlayer", false);
+    jumpFollow = config.GetBoolDefault("AiPlayerbot.JumpFollow", true);
+    jumpChase = config.GetBoolDefault("AiPlayerbot.JumpChase", true);
+    useKnockback = config.GetBoolDefault("AiPlayerbot.UseKnockback", true);
+
     iterationsPerTick = config.GetIntDefault("AiPlayerbot.IterationsPerTick", 100);
     optimizeEquipUpgrading = config.GetBoolDefault("AiPlayerbot.OptimizeEquipUpgrading", true);
 
